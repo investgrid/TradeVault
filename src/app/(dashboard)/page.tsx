@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, Info, AlertCircle, X } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const { data: accounts } = trpc.accounts.list.useQuery();
   const { data: payouts } = trpc.income.list.useQuery();
   const { data: cashflow } = trpc.analytics.cashflow.useQuery();
+  const { data: insights } = trpc.insights.generate.useQuery();
 
   const fundedAccounts = accounts?.filter((a) => a.type === "funded" && a.status === "active") ?? [];
   const recentPayouts = payouts?.slice(0, 4) ?? [];
@@ -209,6 +210,41 @@ export default function DashboardPage() {
               </div>
             </div>
           </Card>
+        </section>
+      )}
+
+      {/* Insights */}
+      {insights && insights.length > 0 && (
+        <section className="flex flex-col gap-2">
+          {insights.map((insight, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 ${
+                insight.severity === "critical"
+                  ? "border-loss/30 bg-loss-muted"
+                  : insight.severity === "warning"
+                  ? "border-pending/30 bg-pending-muted"
+                  : "border-border-subtle bg-bg-elevated/50"
+              }`}
+            >
+              {insight.severity === "critical" ? (
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-loss" />
+              ) : insight.severity === "warning" ? (
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-pending" />
+              ) : (
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+              )}
+              <div className="flex flex-1 flex-col gap-0.5">
+                <span className="text-[12px] font-semibold text-text-primary">{insight.title}</span>
+                <span className="text-[11px] text-text-secondary">{insight.body}</span>
+              </div>
+              {insight.actionUrl && (
+                <Link href={insight.actionUrl} className="shrink-0 text-[11px] font-medium text-accent hover:text-accent-hover transition-colors">
+                  View
+                </Link>
+              )}
+            </div>
+          ))}
         </section>
       )}
 

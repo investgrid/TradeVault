@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n";
+import { trpc } from "@/server/trpc/client";
+import { authClient } from "@/lib/auth-client";
 import {
   LayoutDashboard,
   Wallet,
@@ -31,7 +33,14 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations();
+  const { data: user } = trpc.user.me.useQuery();
+
+  async function handleLogout() {
+    await authClient.signOut();
+    router.push("/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[240px] flex-col border-r border-border-subtle bg-bg-surface lg:flex">
@@ -92,13 +101,18 @@ export function Sidebar() {
       <div className="border-t border-border-subtle px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent/20 to-accent/5 ring-1 ring-border-subtle">
-            <span className="text-[11px] font-semibold text-accent">T</span>
+            <span className="text-[11px] font-semibold text-accent">
+              {user?.name?.[0]?.toUpperCase() ?? "T"}
+            </span>
           </div>
           <div className="flex flex-1 flex-col">
-            <span className="text-[13px] font-medium text-text-primary">Trader</span>
-            <span className="text-[11px] text-text-muted">Free Plan</span>
+            <span className="text-[13px] font-medium text-text-primary">{user?.name ?? "Trader"}</span>
+            <span className="text-[11px] text-text-muted capitalize">{user?.plan ?? "free"} Plan</span>
           </div>
-          <button className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-secondary">
+          <button
+            onClick={handleLogout}
+            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-secondary"
+          >
             <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
