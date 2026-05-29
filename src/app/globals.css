@@ -1,26 +1,124 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #0a0b0d;
+  --bg-surface: #111318;
+  --bg-elevated: #1a1d25;
+  --bg-overlay: #1e2230;
+
+  --border-subtle: #252830;
+  --border-default: #363a47;
+  --border-strong: #4e5769;
+
+  --profit: #00d97e;
+  --profit-dark: #00a85f;
+  --profit-muted: rgba(0, 217, 126, 0.08);
+  --loss: #ff4560;
+  --loss-dark: #cc2940;
+  --loss-muted: rgba(255, 69, 96, 0.08);
+  --pending: #ffb800;
+  --pending-muted: rgba(255, 184, 0, 0.08);
+
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-soft: rgba(99, 102, 241, 0.08);
+  --accent-medium: rgba(99, 102, 241, 0.15);
+
+  --text-primary: #f1f3f9;
+  --text-secondary: #8892a4;
+  --text-muted: #4e5769;
+
+  --font-ui: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
+  --font-display: "Instrument Serif", Georgia, serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-overlay: var(--bg-overlay);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-profit: var(--profit);
+  --color-profit-muted: var(--profit-muted);
+  --color-loss: var(--loss);
+  --color-loss-muted: var(--loss-muted);
+  --color-pending: var(--pending);
+  --color-pending-muted: var(--pending-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-medium: var(--accent-medium);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-numbers {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Premium glow effects */
+.glow-profit {
+  box-shadow: 0 0 20px rgba(0, 217, 126, 0.1), 0 0 60px rgba(0, 217, 126, 0.05);
+}
+
+.glow-loss {
+  box-shadow: 0 0 20px rgba(255, 69, 96, 0.1), 0 0 60px rgba(255, 69, 96, 0.05);
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 60px rgba(99, 102, 241, 0.05);
+}
+
+/* Card depth */
+.card-shadow {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+/* Gradient border trick */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), transparent 60%);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }

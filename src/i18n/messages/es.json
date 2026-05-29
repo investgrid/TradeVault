@@ -1,0 +1,232 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "close": "Cerrar",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "search": "Buscar",
+    "all": "Todos",
+    "or": "o"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "accounts": "Cuentas",
+    "payouts": "Cobros",
+    "expenses": "Gastos",
+    "analytics": "Analíticas",
+    "settings": "Ajustes",
+    "logout": "Cerrar sesión",
+    "quickAdd": "Añadir"
+  },
+  "auth": {
+    "loginTitle": "Bienvenido de nuevo",
+    "loginSubtitle": "Inicia sesión en tu cuenta TradeVault",
+    "signupTitle": "Crea tu cuenta",
+    "signupSubtitle": "Empieza a gestionar tu negocio de trading",
+    "email": "Email",
+    "password": "Contraseña",
+    "name": "Nombre",
+    "emailPlaceholder": "trader@ejemplo.com",
+    "passwordPlaceholder": "Introduce tu contraseña",
+    "passwordPlaceholderNew": "Mínimo 8 caracteres",
+    "namePlaceholder": "Tu nombre",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "createOne": "Crear una",
+    "signIn": "Iniciar Sesión",
+    "signingIn": "Iniciando sesión...",
+    "creatingAccount": "Creando cuenta...",
+    "createAccount": "Crear Cuenta"
+  },
+  "dashboard": {
+    "netWorth": "Patrimonio Neto",
+    "fundedCapital": "Capital Fondeado",
+    "realCapital": "Capital Real",
+    "pendingPayouts": "Cobros Pendientes",
+    "monthlyNet": "Neto Mensual",
+    "growthMoM": "Crecimiento (MoM)",
+    "equityEvolution": "Evolución de Equity",
+    "capitalAllocation": "Distribución de Capital",
+    "fundedAccounts": "Cuentas Fondeadas",
+    "payoutTimeline": "Timeline de Cobros",
+    "monthlyCashflow": "Cashflow Mensual",
+    "activeAccounts": "{count} cuentas activas",
+    "vsLastMonth": "vs mes anterior",
+    "inProcess": "{count} en proceso",
+    "noData": "Añade tu primera cuenta para ver métricas",
+    "emptyChart": "Los datos aparecerán al registrar balances"
+  },
+  "accounts": {
+    "subtitle": "Gestiona todas tus cuentas de trading en un solo lugar",
+    "addAccount": "Añadir Cuenta",
+    "totalAccounts": "Total Cuentas",
+    "totalCapital": "Capital Total",
+    "activeFunded": "Fondeadas Activas",
+    "breached": "Rotas",
+    "name": "Nombre de cuenta",
+    "type": "Tipo",
+    "firm": "Firma / Broker",
+    "balance": "Balance",
+    "initialBalance": "Balance Inicial",
+    "status": "Estado",
+    "currency": "Moneda",
+    "notes": "Notas",
+    "openedAt": "Fecha de apertura",
+    "types": {
+      "funded": "Cuenta Fondeada",
+      "broker": "Cuenta Real",
+      "exchange": "Exchange",
+      "wallet": "Wallet",
+      "cash": "Cuenta Bancaria"
+    },
+    "statuses": {
+      "active": "Activa",
+      "paused": "Pausada",
+      "closed": "Cerrada",
+      "breached": "Rota"
+    },
+    "funded": {
+      "phase": "Fase",
+      "challengeCost": "Coste del Challenge",
+      "profitTarget": "Objetivo de Beneficio",
+      "drawdownType": "Tipo de Drawdown",
+      "maxDrawdown": "Drawdown Máximo",
+      "profitSplit": "Split de Beneficios",
+      "minTradingDays": "Días Mínimos",
+      "payoutThreshold": "Umbral de Payout",
+      "nextPayoutEligible": "Próximo Payout",
+      "phases": {
+        "challenge": "Challenge",
+        "funded": "Fondeada",
+        "evaluation": "Evaluación"
+      },
+      "drawdownTypes": {
+        "static": "Estático",
+        "trailing": "Trailing",
+        "eod_trailing": "EOD Trailing"
+      }
+    },
+    "drawdown": {
+      "title": "Drawdown",
+      "remaining": "restante",
+      "breach": "Breach"
+    },
+    "detail": {
+      "currentBalance": "Balance Actual",
+      "balanceHistory": "Historial de Balance",
+      "updateBalance": "Actualizar Balance",
+      "roi": "ROI",
+      "totalPayouts": "Total Cobros"
+    }
+  },
+  "payouts": {
+    "totalReceived": "Total Recibido (YTD)",
+    "pending": "Pendiente",
+    "inProcess": "En Proceso",
+    "nextEligible": "Próximo Elegible",
+    "recentPayouts": "Cobros Recientes",
+    "addPayout": "Añadir Cobro",
+    "amountGross": "Importe Bruto",
+    "amountNet": "Importe Neto",
+    "splitPercent": "Split %",
+    "platformFee": "Comisión Plataforma",
+    "transferFee": "Comisión Transferencia",
+    "method": "Método",
+    "requestedAt": "Solicitado",
+    "receivedAt": "Recibido",
+    "statuses": {
+      "requested": "Solicitado",
+      "processing": "En proceso",
+      "received": "Recibido",
+      "rejected": "Rechazado"
+    }
+  },
+  "expenses": {
+    "subtitle": "Controla los gastos de tu negocio de trading",
+    "addExpense": "Añadir Gasto",
+    "thisMonth": "Este Mes",
+    "yearToDate": "Año Actual",
+    "expenseRatio": "Ratio de Gastos",
+    "topCategory": "Mayor Categoría",
+    "recentExpenses": "Gastos Recientes",
+    "amount": "Importe",
+    "category": "Categoría",
+    "vendor": "Proveedor",
+    "description": "Descripción",
+    "date": "Fecha",
+    "recurring": "Recurrente",
+    "frequency": "Frecuencia",
+    "categories": {
+      "challenge_fees": "Challenge Fees",
+      "failed_challenge_fees": "Challenges Fallidos",
+      "subscriptions": "Suscripciones",
+      "vps": "VPS",
+      "data_feeds": "Datos de Mercado",
+      "education": "Educación",
+      "software": "Software",
+      "banking_fees": "Comisiones Bancarias",
+      "crypto_fees": "Comisiones Crypto",
+      "taxes_estimated": "Impuestos Estimados",
+      "other": "Otros"
+    },
+    "frequencies": {
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "annual": "Anual"
+    }
+  },
+  "analytics": {
+    "challengeROI": "ROI de Challenges",
+    "fundedCapitalROI": "ROI Capital Fondeado",
+    "payoutConsistency": "Consistencia de Cobros",
+    "accountSurvival": "Supervivencia de Cuentas",
+    "netWorthGrowth": "Crecimiento Patrimonial",
+    "cashflowWaterfall": "Cashflow Mensual",
+    "firmPerformance": "Rendimiento por Firma",
+    "payoutHeatmap": "Mapa de Cobros",
+    "allTime": "Total",
+    "monthlyAvg": "Media mensual"
+  },
+  "settings": {
+    "profile": "Perfil",
+    "preferences": "Preferencias",
+    "subscription": "Suscripción",
+    "data": "Datos",
+    "baseCurrency": "Moneda Base",
+    "baseCurrencyDesc": "Todos los valores se muestran en esta moneda",
+    "language": "Idioma",
+    "languageDesc": "Idioma de la aplicación",
+    "currentPlan": "Plan Actual",
+    "upgradeToPro": "Mejorar a Pro",
+    "manageBilling": "Gestionar Facturación",
+    "exportCSV": "Exportar CSV",
+    "deleteAccount": "Eliminar Cuenta",
+    "plans": {
+      "free": "Gratuito",
+      "freeLimits": "1 cuenta, historial de 30 días",
+      "pro": "Pro",
+      "proPrice": "9€/mes o 49€/año",
+      "proLimits": "Cuentas e historial ilimitados"
+    }
+  },
+  "onboarding": {
+    "welcome": "Tu ecosistema financiero empieza aquí",
+    "addFirst": "Añade tu primera cuenta fondeada para ver tu dashboard.",
+    "addAccount": "Añadir cuenta fondeada"
+  },
+  "quickAdd": {
+    "newPayout": "Nuevo Cobro",
+    "newExpense": "Nuevo Gasto",
+    "updateBalance": "Actualizar Balance",
+    "addAccount": "Añadir Cuenta"
+  }
+}
