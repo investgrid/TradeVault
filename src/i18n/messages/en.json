@@ -44,7 +44,8 @@
     "signIn": "Sign In",
     "signingIn": "Signing in...",
     "creatingAccount": "Creating account...",
-    "createAccount": "Create Account"
+    "createAccount": "Create Account",
+    "invalidCredentials": "Invalid email or password"
   },
   "dashboard": {
     "netWorth": "Net Worth",

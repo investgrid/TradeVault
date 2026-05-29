@@ -44,7 +44,8 @@
     "signIn": "Iniciar Sesión",
     "signingIn": "Iniciando sesión...",
     "creatingAccount": "Creando cuenta...",
-    "createAccount": "Crear Cuenta"
+    "createAccount": "Crear Cuenta",
+    "invalidCredentials": "Email o contraseña incorrectos"
   },
   "dashboard": {
     "netWorth": "Patrimonio Neto",
