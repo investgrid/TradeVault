@@ -177,7 +177,7 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-4">
               <h3 className="text-heading text-text-primary">{t("settings.data")}</h3>
               <div className="flex gap-3">
-                <Button variant="secondary" size="sm" icon={<Download className="h-3.5 w-3.5" />}>
+                <Button variant="secondary" size="sm" icon={<Download className="h-3.5 w-3.5" />} onClick={() => window.open("/api/export?type=all", "_blank")}>
                   {t("settings.exportCSV")}
                 </Button>
                 <Button variant="danger" size="sm" icon={<Trash2 className="h-3.5 w-3.5" />}>

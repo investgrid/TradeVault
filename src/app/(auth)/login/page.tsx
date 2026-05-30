@@ -76,6 +76,11 @@ export default function LoginPage() {
               required
             />
           </motion.div>
+          <motion.div variants={staggerItem} className="flex justify-end -mt-1">
+            <Link href="/forgot-password" className="text-[11px] font-medium text-text-tertiary hover:text-accent transition-colors">
+              Forgot password?
+            </Link>
+          </motion.div>
           {error && (
             <motion.p
               initial={{ opacity: 0, y: -4 }}

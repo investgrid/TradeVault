@@ -1,7 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { Resend } from "resend";
 import { db } from "./db";
 import { users, sessions, authAccounts, verification } from "./db/schema";
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const authSchema = {
   tv_users: users,
@@ -45,5 +48,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
+    sendResetPassword: async ({ user, url }) => {
+      if (!resend) return;
+      await resend.emails.send({
+        from: "TradeVault <noreply@tradevault.app>",
+        to: user.email,
+        subject: "Reset your password — TradeVault",
+        html: `<p>Hi ${user.name ?? ""},</p><p>Click the link below to reset your password:</p><p><a href="${url}">${url}</a></p><p>If you didn't request this, you can ignore this email.</p><p>— TradeVault</p>`,
+      });
+    },
   },
 });

@@ -1,75 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  /* Backgrounds — 5-tier depth system */
-  --bg-base: #0a0b0d;
-  --bg-inset: #070809;
-  --bg-surface: #111318;
-  --bg-elevated: #1a1d25;
-  --bg-overlay: #1e2230;
+  /* ─── Surfaces ─── */
+  --bg-base: #09090b;
+  --bg-inset: #060607;
+  --bg-surface: #0f1012;
+  --bg-elevated: #161719;
+  --bg-overlay: #1c1d20;
+  --bg-hover: #1f2023;
+  --bg-active: #252629;
 
-  /* Borders — 3-tier hierarchy */
-  --border-subtle: #1e2230;
-  --border-default: #2a2f3a;
-  --border-strong: #3d4451;
+  /* ─── Borders ─── */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-default: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-accent: rgba(99, 102, 241, 0.2);
 
-  /* Profit/Loss/Pending — semantic status colors */
-  --profit: #00d97e;
-  --profit-dark: #00a85f;
-  --profit-muted: rgba(0, 217, 126, 0.08);
-  --profit-glow: rgba(0, 217, 126, 0.15);
-  --loss: #ff4560;
-  --loss-dark: #cc2940;
-  --loss-muted: rgba(255, 69, 96, 0.08);
-  --loss-glow: rgba(255, 69, 96, 0.15);
-  --pending: #ffb800;
-  --pending-dark: #cc9300;
-  --pending-muted: rgba(255, 184, 0, 0.08);
-  --pending-glow: rgba(255, 184, 0, 0.15);
+  /* ─── Status Colors ─── */
+  --profit: #10b981;
+  --profit-bright: #34d399;
+  --profit-muted: rgba(16, 185, 129, 0.1);
+  --profit-glow: rgba(16, 185, 129, 0.2);
+  --loss: #ef4444;
+  --loss-bright: #f87171;
+  --loss-muted: rgba(239, 68, 68, 0.1);
+  --loss-glow: rgba(239, 68, 68, 0.2);
+  --pending: #f59e0b;
+  --pending-muted: rgba(245, 158, 11, 0.1);
 
-  /* Accent — indigo primary */
+  /* ─── Accent ─── */
   --accent: #6366f1;
-  --accent-hover: #818cf8;
+  --accent-hover: #7c7ff7;
   --accent-dark: #4f46e5;
-  --accent-soft: rgba(99, 102, 241, 0.08);
-  --accent-medium: rgba(99, 102, 241, 0.15);
-  --accent-glow: rgba(99, 102, 241, 0.25);
+  --accent-soft: rgba(99, 102, 241, 0.06);
+  --accent-medium: rgba(99, 102, 241, 0.12);
+  --accent-strong: rgba(99, 102, 241, 0.2);
+  --accent-glow: rgba(99, 102, 241, 0.3);
 
-  /* Text hierarchy */
-  --text-primary: #f1f3f9;
-  --text-secondary: #8b93a6;
-  --text-muted: #4e5769;
-  --text-inverse: #0a0b0d;
+  /* ─── Text ─── */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+  --text-inverse: #09090b;
 
-  /* Glass tokens */
-  --glass-bg: rgba(17, 19, 24, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-highlight: rgba(255, 255, 255, 0.03);
+  /* ─── Glass ─── */
+  --glass-bg: rgba(15, 16, 18, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-highlight: rgba(255, 255, 255, 0.02);
 
-  /* Typography stack */
-  --font-ui: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
-  --font-display: var(--font-instrument-serif), Georgia, serif;
+  /* ─── Typography ─── */
+  --font-ui: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), "SF Mono", monospace;
+  --font-display: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
 
-  /* Radius scale */
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  /* ─── Radius ─── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
 
-  /* Shadow system */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-highlight);
-  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-highlight);
-  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.3), 0 16px 48px rgba(0, 0, 0, 0.35);
-  --shadow-glow-profit: 0 0 15px rgba(0, 217, 126, 0.12), 0 0 45px rgba(0, 217, 126, 0.06);
-  --shadow-glow-loss: 0 0 15px rgba(255, 69, 96, 0.12), 0 0 45px rgba(255, 69, 96, 0.06);
-  --shadow-glow-accent: 0 0 15px rgba(99, 102, 241, 0.15), 0 0 45px rgba(99, 102, 241, 0.08);
-  --shadow-glow-pending: 0 0 15px rgba(255, 184, 0, 0.12), 0 0 45px rgba(255, 184, 0, 0.06);
+  /* ─── Shadows ─── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-glow-profit: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 60px rgba(16, 185, 129, 0.05);
+  --shadow-glow-loss: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.05);
+  --shadow-glow-accent: 0 0 20px rgba(99, 102, 241, 0.2), 0 0 60px rgba(99, 102, 241, 0.08);
 }
 
 @theme inline {
@@ -78,25 +80,29 @@
   --color-bg-surface: var(--bg-surface);
   --color-bg-elevated: var(--bg-elevated);
   --color-bg-overlay: var(--bg-overlay);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
   --color-border-subtle: var(--border-subtle);
   --color-border-default: var(--border-default);
   --color-border-strong: var(--border-strong);
+  --color-border-accent: var(--border-accent);
   --color-profit: var(--profit);
-  --color-profit-dark: var(--profit-dark);
+  --color-profit-bright: var(--profit-bright);
   --color-profit-muted: var(--profit-muted);
   --color-loss: var(--loss);
-  --color-loss-dark: var(--loss-dark);
+  --color-loss-bright: var(--loss-bright);
   --color-loss-muted: var(--loss-muted);
   --color-pending: var(--pending);
-  --color-pending-dark: var(--pending-dark);
   --color-pending-muted: var(--pending-muted);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-dark: var(--accent-dark);
   --color-accent-soft: var(--accent-soft);
   --color-accent-medium: var(--accent-medium);
+  --color-accent-strong: var(--accent-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
   --color-text-muted: var(--text-muted);
   --color-text-inverse: var(--text-inverse);
   --color-glass-bg: var(--glass-bg);
@@ -106,74 +112,100 @@
   --font-display: var(--font-display);
 }
 
-/* ─── Base ─── */
+/* ─── Base Reset ─── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-default) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* ─── Typography Classes ─── */
+/* ─── Premium Typography ─── */
 .text-hero {
   font-family: var(--font-display);
-  font-size: 36px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.025em;
   font-weight: 400;
+  font-style: italic;
 }
 
 .text-display {
   font-family: var(--font-display);
-  font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   font-weight: 400;
+  font-style: italic;
 }
 
 .text-metric {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.2;
   font-weight: 500;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+}
+
+.text-metric-sm {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-heading-xl {
+  font-family: var(--font-ui);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 .text-heading-lg {
   font-family: var(--font-ui);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.3;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .text-heading {
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .text-body {
   font-family: var(--font-ui);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 400;
+  color: var(--text-secondary);
 }
 
 .text-caption {
   font-family: var(--font-ui);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1;
   font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
 }
 
 .text-code {
@@ -184,110 +216,64 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.font-display {
-  font-family: var(--font-display);
-}
+.font-display { font-family: var(--font-display); }
+.font-numbers { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-.font-numbers {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ─── Glassmorphism ─── */
+/* ─── Glass ─── */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
   border: 1px solid var(--glass-border);
 }
 
 .glass-strong {
-  background: rgba(17, 19, 24, 0.88);
-  backdrop-filter: blur(24px) saturate(1.3);
-  -webkit-backdrop-filter: blur(24px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 16, 18, 0.92);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ─── Surface Variants ─── */
-.surface-inset {
-  background: var(--bg-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
+/* ─── Surfaces ─── */
 .surface-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
 }
 
 .surface-elevated {
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ─── Premium Glow Effects ─── */
-.glow-profit {
-  box-shadow: var(--shadow-glow-profit);
-}
+/* ─── Glow ─── */
+.glow-profit { box-shadow: var(--shadow-glow-profit); }
+.glow-loss { box-shadow: var(--shadow-glow-loss); }
+.glow-accent { box-shadow: var(--shadow-glow-accent); }
 
-.glow-loss {
-  box-shadow: var(--shadow-glow-loss);
-}
-
-.glow-accent {
-  box-shadow: var(--shadow-glow-accent);
-}
-
-.glow-pending {
-  box-shadow: var(--shadow-glow-pending);
-}
-
-/* ─── Card Depth ─── */
-.card-shadow {
-  box-shadow: var(--shadow-md);
-}
-
-.card-shadow-lg {
-  box-shadow: var(--shadow-lg);
-}
+/* ─── Card System ─── */
+.card-shadow { box-shadow: var(--shadow-md); }
+.card-shadow-lg { box-shadow: var(--shadow-lg); }
 
 /* ─── Gradient Border ─── */
-.gradient-border {
-  position: relative;
-}
+.gradient-border { position: relative; }
 .gradient-border::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(99, 102, 241, 0.4),
-    rgba(99, 102, 241, 0.1) 40%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), transparent 50%);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
 }
 
-.gradient-border-profit::before {
-  background: linear-gradient(
-    135deg,
-    rgba(0, 217, 126, 0.4),
-    rgba(0, 217, 126, 0.1) 40%,
-    transparent 70%
-  );
-}
-
 /* ─── Text Gradients ─── */
 .text-gradient-profit {
-  background: linear-gradient(135deg, #00d97e, #00f59b);
+  background: linear-gradient(135deg, #10b981, #34d399);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -300,7 +286,7 @@ body {
   background-clip: text;
 }
 
-/* ─── Skeleton Loading ─── */
+/* ─── Skeleton ─── */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -311,26 +297,21 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.04),
-    transparent
-  );
-  animation: shimmer 1.8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  animation: shimmer 2s ease-in-out infinite;
 }
 
-/* ─── Focus Glow Rings ─── */
+/* ─── Focus Rings ─── */
 .ring-glow-accent {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3), 0 0 12px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
 .ring-glow-profit {
-  box-shadow: 0 0 0 2px rgba(0, 217, 126, 0.3), 0 0 12px rgba(0, 217, 126, 0.15);
+  box-shadow: 0 0 0 1px var(--profit), 0 0 0 4px rgba(16, 185, 129, 0.15);
 }
 
 .ring-glow-loss {
-  box-shadow: 0 0 0 2px rgba(255, 69, 96, 0.3), 0 0 12px rgba(255, 69, 96, 0.15);
+  box-shadow: 0 0 0 1px var(--loss), 0 0 0 4px rgba(239, 68, 68, 0.15);
 }
 
 /* ─── Keyframes ─── */
@@ -341,43 +322,21 @@ body {
 
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes slide-up-fade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-3px); }
 }
 
-@keyframes border-rotate {
-  0% { --angle: 0deg; }
-  100% { --angle: 360deg; }
-}
-
-/* ─── Animation Utilities ─── */
-.animate-shimmer {
-  animation: shimmer 1.8s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-slide-up {
-  animation: slide-up-fade 0.4s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
+/* ─── Utilities ─── */
+.animate-shimmer { animation: shimmer 2s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up-fade 0.3s ease-out forwards; }
+.animate-float { animation: float 3s ease-in-out infinite; }
