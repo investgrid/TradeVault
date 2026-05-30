@@ -2,137 +2,76 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { fadeInUp, staggerContainer, staggerItem } from "@/lib/motion";
-import { Lock, CheckCircle } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { Lock } from "lucide-react";
 import Link from "next/link";
 
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<div className="h-64" />}>
-      <ResetPasswordForm />
-    </Suspense>
-  );
-}
-
-function ResetPasswordForm() {
+function ResetForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
-  const [loading, setLoading] = useState(false);
+  const params = useSearchParams();
+  const token = params.get("token") ?? "";
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
+    const password = new FormData(e.currentTarget).get("password") as string;
 
-    const form = new FormData(e.currentTarget);
-    const newPassword = form.get("password") as string;
-    const confirm = form.get("confirm") as string;
-
-    if (newPassword !== confirm) {
-      setError("Passwords don't match");
-      setLoading(false);
-      return;
-    }
-
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newPassword, token }),
-    });
-    const error = res.ok ? null : { message: "Failed to reset password" };
-
+    const { error } = await authClient.resetPassword({ newPassword: password, token });
     if (error) {
-      setError(error.message ?? "Something went wrong");
+      setError(error.message ?? "Failed to reset password");
       setLoading(false);
     } else {
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 2000);
+      router.push("/login");
     }
   }
 
-  if (success) {
+  if (!token) {
     return (
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeInUp}
-        className="rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow text-center"
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-profit-muted">
-            <CheckCircle className="h-6 w-6 text-profit" />
-          </div>
-          <div>
-            <h1 className="text-heading-lg text-text-primary mb-1">Password updated</h1>
-            <p className="text-[13px] text-text-secondary">Redirecting to login...</p>
-          </div>
-        </div>
-      </motion.div>
+      <div className="card card-body text-center space-y-4">
+        <h1 className="f-title">Invalid link</h1>
+        <p className="f-sub">This reset link is invalid or expired.</p>
+        <Link href="/forgot-password" className="text-[11px] text-brand">Request a new one</Link>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeInUp}
-      className="rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow gradient-border"
-    >
-      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="flex flex-col gap-6">
-        <motion.div variants={staggerItem} className="flex flex-col items-center gap-1.5">
-          <h1 className="text-heading-lg text-text-primary">New password</h1>
-          <p className="text-[13px] text-text-secondary">
-            Choose a strong password for your account
-          </p>
-        </motion.div>
+    <div className="card card-body space-y-5">
+      <div className="text-center">
+        <h1 className="f-title mb-1">New password</h1>
+        <p className="f-sub">Choose a new password for your account</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <motion.div variants={staggerItem}>
-            <Input
-              id="password"
-              name="password"
-              label="New password"
-              type="password"
-              placeholder="Min 6 characters"
-              icon={<Lock className="h-3.5 w-3.5" />}
-              minLength={6}
-              required
-            />
-          </motion.div>
-          <motion.div variants={staggerItem}>
-            <Input
-              id="confirm"
-              name="confirm"
-              label="Confirm password"
-              type="password"
-              placeholder="Repeat password"
-              icon={<Lock className="h-3.5 w-3.5" />}
-              minLength={6}
-              required
-            />
-          </motion.div>
-          {error && (
-            <p className="text-[12px] text-loss font-medium">{error}</p>
-          )}
-          <motion.div variants={staggerItem}>
-            <Button type="submit" variant="gradient" className="w-full" isLoading={loading}>
-              Update password
-            </Button>
-          </motion.div>
-        </form>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="password" className="f-label block mb-1.5">New Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-t4" />
+            <input id="password" name="password" type="password" required minLength={6} placeholder="Min 6 characters" className="w-full h-9 pl-9 pr-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 placeholder:text-t4 focus:outline-none focus:border-brand transition-colors" />
+          </div>
+        </div>
 
-        <motion.p variants={staggerItem} className="text-center text-[12px] text-text-muted">
-          <Link href="/login" className="font-medium text-accent hover:text-accent-hover transition-colors">
-            Back to login
-          </Link>
-        </motion.p>
-      </motion.div>
-    </motion.div>
+        {error && (
+          <div className="rounded-[var(--r-sm)] bg-down-soft border border-down/10 px-3 py-2">
+            <p className="text-[11px] text-down">{error}</p>
+          </div>
+        )}
+
+        <button type="submit" disabled={loading} className="w-full h-9 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors disabled:opacity-50">
+          {loading ? "Resetting..." : "Reset Password"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="card card-body"><div className="skeleton h-40 rounded-[var(--r-md)]" /></div>}>
+      <ResetForm />
+    </Suspense>
   );
 }
