@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n";
 import {
@@ -25,7 +26,7 @@ export function MobileNav() {
   const t = useTranslations();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-subtle bg-bg-surface/95 backdrop-blur-lg lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-glass-border lg:hidden glass-strong">
       <div className="flex h-16 items-center justify-around px-2">
         {items.map((item) => {
           const isActive =
@@ -36,12 +37,19 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-3 py-1.5 transition-colors",
-                isActive ? "text-accent" : "text-text-muted"
+                "relative flex flex-col items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5 transition-colors",
+                isActive ? "text-accent" : "text-text-muted active:scale-95"
               )}
             >
               <item.icon className="h-5 w-5" />
               <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="mobile-nav-indicator"
+                  className="absolute -bottom-1 h-0.5 w-4 rounded-full bg-accent shadow-[0_0_6px_rgba(99,102,241,0.5)]"
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+              )}
             </Link>
           );
         })}

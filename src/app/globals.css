@@ -1,46 +1,80 @@
 @import "tailwindcss";
 
 :root {
+  /* Backgrounds — 5-tier depth system */
   --bg-base: #0a0b0d;
+  --bg-inset: #070809;
   --bg-surface: #111318;
   --bg-elevated: #1a1d25;
   --bg-overlay: #1e2230;
 
-  --border-subtle: #252830;
-  --border-default: #363a47;
-  --border-strong: #4e5769;
+  /* Borders — 3-tier hierarchy */
+  --border-subtle: #1e2230;
+  --border-default: #2a2f3a;
+  --border-strong: #3d4451;
 
+  /* Profit/Loss/Pending — semantic status colors */
   --profit: #00d97e;
   --profit-dark: #00a85f;
   --profit-muted: rgba(0, 217, 126, 0.08);
+  --profit-glow: rgba(0, 217, 126, 0.15);
   --loss: #ff4560;
   --loss-dark: #cc2940;
   --loss-muted: rgba(255, 69, 96, 0.08);
+  --loss-glow: rgba(255, 69, 96, 0.15);
   --pending: #ffb800;
+  --pending-dark: #cc9300;
   --pending-muted: rgba(255, 184, 0, 0.08);
+  --pending-glow: rgba(255, 184, 0, 0.15);
 
+  /* Accent — indigo primary */
   --accent: #6366f1;
   --accent-hover: #818cf8;
+  --accent-dark: #4f46e5;
   --accent-soft: rgba(99, 102, 241, 0.08);
   --accent-medium: rgba(99, 102, 241, 0.15);
+  --accent-glow: rgba(99, 102, 241, 0.25);
 
+  /* Text hierarchy */
   --text-primary: #f1f3f9;
-  --text-secondary: #8892a4;
+  --text-secondary: #8b93a6;
   --text-muted: #4e5769;
+  --text-inverse: #0a0b0d;
 
+  /* Glass tokens */
+  --glass-bg: rgba(17, 19, 24, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-highlight: rgba(255, 255, 255, 0.03);
+
+  /* Typography stack */
   --font-ui: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
-  --font-display: "Instrument Serif", Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), monospace;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
 
+  /* Radius scale */
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
+
+  /* Shadow system */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-highlight);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-highlight);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.3), 0 16px 48px rgba(0, 0, 0, 0.35);
+  --shadow-glow-profit: 0 0 15px rgba(0, 217, 126, 0.12), 0 0 45px rgba(0, 217, 126, 0.06);
+  --shadow-glow-loss: 0 0 15px rgba(255, 69, 96, 0.12), 0 0 45px rgba(255, 69, 96, 0.06);
+  --shadow-glow-accent: 0 0 15px rgba(99, 102, 241, 0.15), 0 0 45px rgba(99, 102, 241, 0.08);
+  --shadow-glow-pending: 0 0 15px rgba(255, 184, 0, 0.12), 0 0 45px rgba(255, 184, 0, 0.06);
 }
 
 @theme inline {
   --color-bg-base: var(--bg-base);
+  --color-bg-inset: var(--bg-inset);
   --color-bg-surface: var(--bg-surface);
   --color-bg-elevated: var(--bg-elevated);
   --color-bg-overlay: var(--bg-overlay);
@@ -48,22 +82,31 @@
   --color-border-default: var(--border-default);
   --color-border-strong: var(--border-strong);
   --color-profit: var(--profit);
+  --color-profit-dark: var(--profit-dark);
   --color-profit-muted: var(--profit-muted);
   --color-loss: var(--loss);
+  --color-loss-dark: var(--loss-dark);
   --color-loss-muted: var(--loss-muted);
   --color-pending: var(--pending);
+  --color-pending-dark: var(--pending-dark);
   --color-pending-muted: var(--pending-muted);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-dark: var(--accent-dark);
   --color-accent-soft: var(--accent-soft);
   --color-accent-medium: var(--accent-medium);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
   --font-sans: var(--font-ui);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 }
 
+/* ─── Base ─── */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
@@ -77,6 +120,70 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Typography Classes ─── */
+.text-hero {
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+.text-display {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+}
+
+.text-metric {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-heading-lg {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-heading {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.text-body {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
 .font-display {
   font-family: var(--font-display);
 }
@@ -86,28 +193,69 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Premium glow effects */
+/* ─── Glassmorphism ─── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: rgba(17, 19, 24, 0.88);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Surface Variants ─── */
+.surface-inset {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.surface-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.surface-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Premium Glow Effects ─── */
 .glow-profit {
-  box-shadow: 0 0 20px rgba(0, 217, 126, 0.1), 0 0 60px rgba(0, 217, 126, 0.05);
+  box-shadow: var(--shadow-glow-profit);
 }
 
 .glow-loss {
-  box-shadow: 0 0 20px rgba(255, 69, 96, 0.1), 0 0 60px rgba(255, 69, 96, 0.05);
+  box-shadow: var(--shadow-glow-loss);
 }
 
 .glow-accent {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 60px rgba(99, 102, 241, 0.05);
+  box-shadow: var(--shadow-glow-accent);
 }
 
-/* Card depth */
+.glow-pending {
+  box-shadow: var(--shadow-glow-pending);
+}
+
+/* ─── Card Depth ─── */
 .card-shadow {
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  box-shadow: var(--shadow-md);
 }
 
-/* Gradient border trick */
+.card-shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ─── Gradient Border ─── */
 .gradient-border {
   position: relative;
 }
@@ -117,8 +265,119 @@ body {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), transparent 60%);
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.4),
+    rgba(99, 102, 241, 0.1) 40%,
+    transparent 70%
+  );
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
+}
+
+.gradient-border-profit::before {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 217, 126, 0.4),
+    rgba(0, 217, 126, 0.1) 40%,
+    transparent 70%
+  );
+}
+
+/* ─── Text Gradients ─── */
+.text-gradient-profit {
+  background: linear-gradient(135deg, #00d97e, #00f59b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-accent {
+  background: linear-gradient(135deg, #6366f1, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Skeleton Loading ─── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ─── Focus Glow Rings ─── */
+.ring-glow-accent {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3), 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.ring-glow-profit {
+  box-shadow: 0 0 0 2px rgba(0, 217, 126, 0.3), 0 0 12px rgba(0, 217, 126, 0.15);
+}
+
+.ring-glow-loss {
+  box-shadow: 0 0 0 2px rgba(255, 69, 96, 0.3), 0 0 12px rgba(255, 69, 96, 0.15);
+}
+
+/* ─── Keyframes ─── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes border-rotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+/* ─── Animation Utilities ─── */
+.animate-shimmer {
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up-fade 0.4s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }

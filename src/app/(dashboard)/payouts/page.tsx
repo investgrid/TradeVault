@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Plus, X, ArrowDownRight, Clock, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageWrapper, PageSection } from "@/components/layout/page-wrapper";
 import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
+import { staggerContainer } from "@/lib/motion";
 
 type PayoutStatus = "requested" | "processing" | "received" | "rejected";
 
@@ -141,8 +144,9 @@ export default function PayoutsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <PageWrapper>
       {/* Header */}
+      <PageSection>
       <div className="flex items-center justify-between">
         <div />
         <Dialog.Root open={modalOpen} onOpenChange={setModalOpen}>
@@ -155,7 +159,7 @@ export default function PayoutsPage() {
 
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-subtle bg-bg-surface p-6 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
               <div className="flex items-center justify-between mb-6">
                 <Dialog.Title className="text-base font-semibold text-text-primary">
                   {t("payouts.addPayout")}
@@ -311,8 +315,11 @@ export default function PayoutsPage() {
         </Dialog.Root>
       </div>
 
+      </PageSection>
+
       {/* Header Stats */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <PageSection>
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           label={t("payouts.totalReceived")}
           value={formatCurrency(stats.totalReceived)}
@@ -337,9 +344,11 @@ export default function PayoutsPage() {
           change=""
           changeType="neutral"
         />
-      </section>
+      </motion.div>
+      </PageSection>
 
       {/* Payouts List */}
+      <PageSection>
       <Card variant="default" className="overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
           <h2 className="text-sm font-medium text-text-primary">
@@ -413,6 +422,7 @@ export default function PayoutsPage() {
           </div>
         )}
       </Card>
-    </div>
+      </PageSection>
+    </PageWrapper>
   );
 }

@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Input } from "@/components/ui/input";
+import { PageWrapper, PageSection } from "@/components/layout/page-wrapper";
 import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
+import { staggerContainer } from "@/lib/motion";
 import { Plus, X } from "lucide-react";
 
 const CATEGORIES = ["challenge_fees", "failed_challenge_fees", "subscriptions", "vps", "data_feeds", "education", "software", "banking_fees", "crypto_fees", "taxes_estimated", "other"] as const;
@@ -47,7 +50,8 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <PageWrapper>
+      <PageSection>
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-text-secondary">{t("expenses.subtitle")}</p>
         <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -56,7 +60,7 @@ export default function ExpensesPage() {
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-subtle bg-bg-surface p-6 shadow-2xl">
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow">
               <div className="flex items-center justify-between mb-5">
                 <Dialog.Title className="text-[15px] font-semibold text-text-primary">{t("expenses.addExpense")}</Dialog.Title>
                 <Dialog.Close asChild><button className="text-text-muted hover:text-text-secondary"><X className="h-4 w-4" /></button></Dialog.Close>
@@ -101,13 +105,18 @@ export default function ExpensesPage() {
         </Dialog.Root>
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      </PageSection>
+
+      <PageSection>
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard label={t("expenses.thisMonth")} value={`$${thisMonth.toLocaleString()}`} changeType="negative" />
         <MetricCard label={t("expenses.yearToDate")} value={`$${ytd.toLocaleString()}`} />
         <MetricCard label={t("expenses.expenseRatio")} value="—" />
         <MetricCard label={t("expenses.topCategory")} value="—" />
-      </section>
+      </motion.div>
+      </PageSection>
 
+      <PageSection>
       <Card variant="elevated" className="overflow-hidden p-0">
         <div className="border-b border-border-subtle px-5 py-3 overflow-x-auto">
           <div className="flex items-center gap-1.5">
@@ -147,6 +156,7 @@ export default function ExpensesPage() {
           ))}
         </div>
       </Card>
-    </div>
+      </PageSection>
+    </PageWrapper>
   );
 }
