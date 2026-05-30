@@ -100,7 +100,26 @@ export async function generateInsights(userId: string): Promise<Insight[]> {
     });
   }
 
-  return insights.slice(0, 5);
+  const finalInsights = insights.slice(0, 5);
+
+  if (finalInsights.length > 0) {
+    await db.delete(aiInsights).where(
+      and(eq(aiInsights.userId, userId), eq(aiInsights.isDismissed, false))
+    );
+    await db.insert(aiInsights).values(
+      finalInsights.map((i) => ({
+        userId,
+        type: i.type,
+        severity: i.severity,
+        title: i.title,
+        body: i.body,
+        actionUrl: i.actionUrl,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      }))
+    );
+  }
+
+  return finalInsights;
 }
 
 export async function getActiveInsights(userId: string) {

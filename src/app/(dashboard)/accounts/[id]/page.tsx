@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, MotionCard } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,10 @@ export default function AccountDetailPage() {
   const id = params.id as string;
   const [balance, setBalance] = useState("");
 
+  const router = useRouter();
   const { data: account, refetch, isLoading } = trpc.accounts.getById.useQuery({ id });
   const updateBalance = trpc.accounts.updateBalance.useMutation({ onSuccess: () => { refetch(); setBalance(""); } });
+  const deleteAccount = trpc.accounts.delete.useMutation({ onSuccess: () => router.push("/accounts") });
 
   if (isLoading) {
     return (
@@ -64,9 +66,23 @@ export default function AccountDetailPage() {
                 <span className="text-[12px] text-text-muted">{account.firm ?? t(`accounts.types.${account.type}`)}</span>
               </div>
             </div>
-            <Badge variant={account.status === "active" ? "profit" : account.status === "breached" ? "loss" : "default"} dot size="md">
-              {t(`accounts.statuses.${account.status}`)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={account.status === "active" ? "profit" : account.status === "breached" ? "loss" : "default"} dot size="md">
+                {t(`accounts.statuses.${account.status}`)}
+              </Badge>
+              <Button
+                variant="danger"
+                size="xs"
+                onClick={() => {
+                  if (confirm("Delete this account? This cannot be undone.")) {
+                    deleteAccount.mutate({ id });
+                  }
+                }}
+                isLoading={deleteAccount.isPending}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       </PageSection>
@@ -166,11 +182,18 @@ export default function AccountDetailPage() {
             )}
             <Card className="flex flex-col gap-1.5">
               <span className="text-caption text-text-muted">Total Payouts</span>
-              <span className="text-metric text-[18px] text-profit">—</span>
+              <span className="text-metric text-[18px] text-profit">
+                {account.totalPayouts > 0 ? formatCurrency(account.totalPayouts) : "—"}
+              </span>
+              {account.payoutCount > 0 && (
+                <span className="text-[10px] text-text-muted">{account.payoutCount} received</span>
+              )}
             </Card>
             <Card className="flex flex-col gap-1.5">
               <span className="text-caption text-text-muted">ROI</span>
-              <span className="text-metric text-[18px] text-profit">—</span>
+              <span className={`text-metric text-[18px] ${account.roi >= 0 ? "text-profit" : "text-loss"}`}>
+                {account.roi !== 0 ? `${account.roi >= 0 ? "+" : ""}${account.roi.toFixed(0)}%` : "—"}
+              </span>
             </Card>
           </motion.div>
         </motion.div>

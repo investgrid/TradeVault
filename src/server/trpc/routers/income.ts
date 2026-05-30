@@ -52,6 +52,33 @@ export const incomeRouter = router({
       return record;
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        accountId: z.string().uuid().optional(),
+        amountGross: z.string().optional(),
+        amountNet: z.string().optional(),
+        splitPct: z.string().optional(),
+        platformFee: z.string().optional(),
+        transferFee: z.string().optional(),
+        status: z.enum(["requested", "processing", "received", "rejected"]).optional(),
+        requestedAt: z.string().nullable().optional(),
+        receivedAt: z.string().nullable().optional(),
+        method: z.string().max(50).optional(),
+        notes: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      const [record] = await db
+        .update(income)
+        .set({ ...data, updatedAt: new Date() })
+        .where(and(eq(income.id, id), eq(income.userId, ctx.userId)))
+        .returning();
+      return record;
+    }),
+
   updateStatus: protectedProcedure
     .input(
       z.object({

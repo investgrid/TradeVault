@@ -1,8 +1,8 @@
 import { z } from "zod/v4";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { router, protectedProcedure } from "../trpc";
 import { db } from "../../db";
-import { accounts, fundedAccounts, balanceSnapshots } from "../../db/schema";
+import { accounts, fundedAccounts, balanceSnapshots, income } from "../../db/schema";
 import { calculateDrawdown } from "../../services/drawdown.service";
 
 export const accountsRouter = router({
@@ -55,7 +55,28 @@ export const accountsRouter = router({
         .orderBy(desc(balanceSnapshots.snapshotDate))
         .limit(90);
 
-      return { ...account, funded, drawdown, history: history.reverse() };
+      // Total payouts for this account
+      const [payoutStats] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(CAST(amount_net AS DECIMAL)), 0)`,
+          count: sql<string>`COUNT(*)`,
+        })
+        .from(income)
+        .where(
+          and(
+            eq(income.accountId, account.id),
+            eq(income.status, "received")
+          )
+        );
+
+      const totalPayouts = Number(payoutStats?.total ?? 0);
+      const payoutCount = Number(payoutStats?.count ?? 0);
+
+      // ROI calculation (payouts - challenge cost) / challenge cost
+      const challengeCost = funded ? Number(funded.challengeCost ?? 0) : 0;
+      const roi = challengeCost > 0 ? ((totalPayouts - challengeCost) / challengeCost) * 100 : 0;
+
+      return { ...account, funded, drawdown, history: history.reverse(), totalPayouts, payoutCount, roi };
     }),
 
   create: protectedProcedure

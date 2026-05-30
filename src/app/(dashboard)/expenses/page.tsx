@@ -27,6 +27,9 @@ export default function ExpensesPage() {
 
   const { data: expenses, refetch } = trpc.expenses.list.useQuery();
   const createMutation = trpc.expenses.create.useMutation({ onSuccess: () => { refetch(); setOpen(false); } });
+  const deleteMutation = trpc.expenses.delete.useMutation({ onSuccess: () => refetch() });
+
+  const { data: payouts } = trpc.income.list.useQuery();
 
   const filtered = expenses?.filter((e) => filter === "all" || e.category === filter) ?? [];
   const thisMonth = expenses?.filter((e) => {
@@ -35,6 +38,17 @@ export default function ExpensesPage() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).reduce((s, e) => s + Number(e.amount), 0) ?? 0;
   const ytd = expenses?.reduce((s, e) => s + Number(e.amount), 0) ?? 0;
+
+  const totalIncome = payouts?.filter((p) => p.status === "received").reduce((s, p) => s + Number(p.amountNet ?? p.amountGross ?? 0), 0) ?? 0;
+  const expenseRatio = totalIncome > 0 ? `${((ytd / totalIncome) * 100).toFixed(0)}%` : "—";
+  const expenseRatioType = totalIncome > 0 && (ytd / totalIncome) > 0.3 ? "negative" as const : "neutral" as const;
+
+  const categoryTotals = expenses?.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] ?? 0) + Number(e.amount);
+    return acc;
+  }, {} as Record<string, number>) ?? {};
+  const topCategoryKey = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const topCategory = topCategoryKey ? t(`expenses.categories.${topCategoryKey}`) : "—";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -111,8 +125,8 @@ export default function ExpensesPage() {
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard label={t("expenses.thisMonth")} value={`$${thisMonth.toLocaleString()}`} changeType="negative" />
         <MetricCard label={t("expenses.yearToDate")} value={`$${ytd.toLocaleString()}`} />
-        <MetricCard label={t("expenses.expenseRatio")} value="—" />
-        <MetricCard label={t("expenses.topCategory")} value="—" />
+        <MetricCard label={t("expenses.expenseRatio")} value={expenseRatio} changeType={expenseRatioType} />
+        <MetricCard label={t("expenses.topCategory")} value={topCategory} />
       </motion.div>
       </PageSection>
 
@@ -137,7 +151,7 @@ export default function ExpensesPage() {
             </div>
           )}
           {filtered.map((expense) => (
-            <div key={expense.id} className="flex items-center justify-between px-5 py-4 transition-all hover:bg-bg-elevated/50">
+            <div key={expense.id} className="group flex items-center justify-between px-5 py-4 transition-all hover:bg-bg-elevated/50">
               <div className="flex items-center gap-3.5">
                 <div className="flex flex-col">
                   <span className="text-[13px] font-medium text-text-primary">
@@ -149,9 +163,17 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
-              <span className="font-numbers text-[13px] font-medium text-loss">
-                -${Number(expense.amount).toLocaleString()}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-numbers text-[13px] font-medium text-loss">
+                  -${Number(expense.amount).toLocaleString()}
+                </span>
+                <button
+                  onClick={() => { if (confirm("Delete this expense?")) deleteMutation.mutate({ id: expense.id }); }}
+                  className="opacity-0 group-hover:opacity-100 rounded-[var(--radius-xs)] p-1 text-text-muted hover:text-loss hover:bg-loss/10 transition-all"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

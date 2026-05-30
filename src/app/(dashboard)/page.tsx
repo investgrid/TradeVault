@@ -22,13 +22,14 @@ import {
 
 export default function DashboardPage() {
   const t = useTranslations();
+  const [period, setPeriod] = useState("3M");
   const { data: dashboard, isLoading: dashLoading } = trpc.analytics.dashboard.useQuery();
   const { data: accounts } = trpc.accounts.list.useQuery();
   const { data: payouts } = trpc.income.list.useQuery();
   const { data: cashflow } = trpc.analytics.cashflow.useQuery();
-  const { data: netWorthHistory } = trpc.analytics.netWorthHistory.useQuery();
+  const periodDays = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 }[period] ?? 90;
+  const { data: netWorthHistory } = trpc.analytics.netWorthHistory.useQuery({ days: periodDays });
   const { data: insights } = trpc.insights.generate.useQuery();
-  const [period, setPeriod] = useState("3M");
 
   const fundedAccounts = accounts?.filter((a) => a.type === "funded" && a.status === "active") ?? [];
   const recentPayouts = payouts?.slice(0, 5) ?? [];

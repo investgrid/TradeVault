@@ -39,6 +39,7 @@ export default function PayoutsPage() {
       resetForm();
     },
   });
+  const deleteMutation = trpc.income.delete.useMutation({ onSuccess: () => refetch() });
 
   // Form state
   const [accountId, setAccountId] = useState("");
@@ -386,7 +387,7 @@ export default function PayoutsPage() {
               return (
                 <div
                   key={payout.id}
-                  className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-bg-elevated/40"
+                  className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-bg-elevated/40"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-bg-elevated text-xs font-bold text-text-secondary">
@@ -415,6 +416,12 @@ export default function PayoutsPage() {
                     <Badge variant={badgeConfig.variant} dot={badgeConfig.dot}>
                       {t(`payouts.statuses.${statusKey}`)}
                     </Badge>
+                    <button
+                      onClick={() => { if (confirm("Delete this payout?")) deleteMutation.mutate({ id: payout.id }); }}
+                      className="opacity-0 group-hover:opacity-100 rounded-[var(--radius-xs)] p-1 text-text-muted hover:text-loss hover:bg-loss/10 transition-all"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               );
