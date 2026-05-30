@@ -340,3 +340,55 @@ body {
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .animate-slide-up { animation: slide-up-fade 0.3s ease-out forwards; }
 .animate-float { animation: float 3s ease-in-out infinite; }
+
+/* ─── Legal Prose ─── */
+.prose-legal {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.prose-legal h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.prose-legal h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 32px;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.prose-legal h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+.prose-legal p {
+  margin-bottom: 12px;
+}
+.prose-legal ul {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+.prose-legal li {
+  margin-bottom: 4px;
+  list-style-type: disc;
+}
+.prose-legal a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-legal a:hover {
+  color: var(--accent-hover);
+}
+.prose-legal strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}

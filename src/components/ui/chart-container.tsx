@@ -23,10 +23,10 @@ export function ChartContainer({
   actions,
   isEmpty,
   isLoading,
-  emptyMessage = "No data available yet",
+  emptyMessage = "No data available",
   children,
   className,
-  height = "h-[220px]",
+  height = "h-[200px]",
 }: ChartContainerProps) {
   if (isLoading) {
     return <ChartSkeleton className={className} />;
@@ -36,33 +36,26 @@ export function ChartContainer({
     <motion.div
       variants={staggerItem}
       className={cn(
-        "rounded-[var(--radius-xl)] border border-border-subtle bg-bg-surface p-5",
+        "rounded-[var(--radius-lg)] border border-border-subtle bg-bg-surface",
         className
       )}
     >
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div>
-          <h3 className="text-heading text-text-primary">{title}</h3>
+          <h3 className="text-[13px] font-semibold text-text-primary tracking-tight">{title}</h3>
           {subtitle && (
-            <p className="text-[12px] text-text-secondary mt-0.5">{subtitle}</p>
+            <p className="text-[11px] text-text-tertiary mt-0.5">{subtitle}</p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-1.5">{actions}</div>}
+        {actions && <div className="flex items-center gap-1">{actions}</div>}
       </div>
 
       {isEmpty ? (
-        <div className={cn("flex items-center justify-center", height)}>
-          <div className="text-center">
-            <div className="w-10 h-10 rounded-full bg-bg-elevated border border-border-subtle flex items-center justify-center mx-auto mb-3">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-text-muted">
-                <path d="M2 14L6 8L10 11L16 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <p className="text-[12px] text-text-muted">{emptyMessage}</p>
-          </div>
+        <div className={cn("flex items-center justify-center px-4 pb-4", height)}>
+          <p className="text-[11px] text-text-muted">{emptyMessage}</p>
         </div>
       ) : (
-        <div className={height}>{children}</div>
+        <div className={cn("px-2 pb-3", height)}>{children}</div>
       )}
     </motion.div>
   );
@@ -78,16 +71,16 @@ export function PeriodSelector({
   onChange: (period: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-0.5 p-0.5 rounded-[var(--radius-sm)] bg-bg-elevated/60 border border-border-subtle">
+    <div className="flex items-center gap-0.5 rounded-[var(--radius-sm)] bg-bg-elevated p-0.5 border border-border-subtle">
       {periods.map((period) => (
         <button
           key={period}
           onClick={() => onChange(period)}
           className={cn(
-            "px-2.5 py-1 rounded-[5px] text-[11px] font-medium transition-all duration-200",
+            "px-2 py-0.5 rounded-[3px] text-[10px] font-medium transition-all duration-150",
             active === period
-              ? "bg-accent text-white shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
+              ? "bg-bg-active text-text-primary shadow-xs"
+              : "text-text-muted hover:text-text-secondary"
           )}
         >
           {period}
