@@ -4,146 +4,103 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
 import { authClient } from "@/lib/auth-client";
 import {
-  LayoutDashboard,
-  Wallet,
-  ArrowUpDown,
-  Receipt,
-  BarChart3,
-  Settings,
-  LogOut,
-  ChevronRight,
+  LayoutGrid, Wallet, ArrowUpDown, Receipt, BarChart3, Shield,
+  Target, Calendar, BookOpen, Activity, Settings, LogOut, Zap,
   type LucideIcon,
 } from "lucide-react";
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-const navItems: NavItem[] = [
-  { label: "Overview", href: "/", icon: LayoutDashboard },
+const MAIN = [
+  { label: "Control Center", href: "/", icon: LayoutGrid },
   { label: "Accounts", href: "/accounts", icon: Wallet },
   { label: "Payouts", href: "/payouts", icon: ArrowUpDown },
   { label: "Expenses", href: "/expenses", icon: Receipt },
+  { label: "Risk", href: "/risk", icon: Shield },
+];
+
+const ANALYSIS = [
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Journal", href: "/journal", icon: BookOpen },
+  { label: "Trades", href: "/trades", icon: Activity },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Goals", href: "/goals", icon: Target },
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const path = usePathname();
   const router = useRouter();
-  const t = useTranslations();
   const { data: user } = trpc.user.me.useQuery();
 
-  async function handleLogout() {
-    await authClient.signOut();
-    router.push("/login");
-  }
+  const active = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
 
   return (
-    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[220px] flex-col bg-bg-surface lg:flex border-r border-border-subtle">
-      {/* Workspace header */}
-      <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-border-subtle">
-        <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10">
-          <img src="/logo.png" alt="" width={16} height={16} className="rounded-[3px]" />
+    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[var(--sidebar)] flex-col border-r border-line-1 bg-layer-1 lg:flex">
+      {/* Brand */}
+      <div className="flex h-[var(--header)] items-center gap-2.5 px-5 border-b border-line-0">
+        <div className="h-[22px] w-[22px] rounded-md bg-brand/15 flex items-center justify-center ring-1 ring-brand/20">
+          <Zap className="h-3 w-3 text-brand" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-[13px] font-semibold text-text-primary leading-tight tracking-tight">
-            TradeVault
-          </span>
-          <span className="text-[10px] text-text-tertiary leading-tight">
-            {user?.plan === "pro" ? "Pro" : "Free"} workspace
-          </span>
-        </div>
+        <span className="text-[13px] font-bold tracking-tight text-t1">TradeVault</span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-0.5 px-2 pt-3">
-        <span className="px-2 mb-1 text-[10px] font-medium text-text-muted uppercase tracking-wider">
-          Platform
-        </span>
-        {navItems.map((item) => {
-          const isActive =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group relative flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-[7px] text-[13px] font-medium transition-all duration-150",
-                isActive
-                  ? "text-text-primary bg-bg-active"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
-              )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-active"
-                  className="absolute inset-0 rounded-[var(--radius-md)] bg-bg-active border border-border-default"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  style={{ zIndex: -1 }}
-                />
-              )}
-              <item.icon
-                className={cn(
-                  "h-4 w-4 flex-shrink-0",
-                  isActive ? "text-text-primary" : "text-text-muted group-hover:text-text-secondary"
-                )}
-                strokeWidth={isActive ? 2 : 1.5}
-              />
-              <span className="flex-1">{item.label}</span>
-              {isActive && (
-                <ChevronRight className="h-3 w-3 text-text-muted" />
-              )}
-            </Link>
-          );
-        })}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-5">
+        <NavGroup items={MAIN} path={path} />
+        <div className="mx-2 h-px bg-line-0" />
+        <NavGroup items={ANALYSIS} path={path} />
       </nav>
 
-      {/* Settings */}
-      <div className="px-2 pb-2">
-        <Link
-          href="/settings"
-          className={cn(
-            "flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-[7px] text-[13px] font-medium transition-all duration-150",
-            pathname === "/settings"
-              ? "text-text-primary bg-bg-active"
-              : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
-          )}
-        >
-          <Settings className="h-4 w-4 text-text-muted" strokeWidth={1.5} />
-          Settings
-        </Link>
-      </div>
-
-      {/* User */}
-      <div className="border-t border-border-subtle px-3 py-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-accent/5 text-[10px] font-bold text-accent ring-1 ring-border-default">
+      {/* Footer */}
+      <div className="border-t border-line-0 p-3 space-y-1">
+        <Item item={{ label: "Settings", href: "/settings", icon: Settings }} isActive={active("/settings")} />
+        <div className="flex items-center gap-2.5 mt-3 px-2.5 py-1">
+          <div className="h-6 w-6 rounded-full bg-brand/10 text-[9px] font-bold text-brand flex items-center justify-center ring-1 ring-line-1 shrink-0">
             {user?.name?.[0]?.toUpperCase() ?? "T"}
           </div>
-          <div className="flex flex-1 flex-col min-w-0">
-            <span className="text-[12px] font-medium text-text-primary truncate leading-tight">
-              {user?.name ?? "Trader"}
-            </span>
-            <span className="text-[10px] text-text-muted truncate leading-tight">
-              {user?.email ?? ""}
-            </span>
+          <div className="flex-1 min-w-0">
+            <div className="text-[11px] font-medium text-t1 truncate leading-none">{user?.name ?? "Trader"}</div>
+            <div className="text-[9px] text-t4 truncate leading-none mt-0.5">{user?.email ?? ""}</div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="rounded-[var(--radius-sm)] p-1 text-text-muted hover:text-loss hover:bg-loss-muted transition-colors"
-            title="Sign out"
-          >
-            <LogOut className="h-3.5 w-3.5" />
+          <button onClick={async () => { await authClient.signOut(); router.push("/login"); }} className="p-1 text-t4 hover:text-down transition-colors">
+            <LogOut className="h-3 w-3" />
           </button>
         </div>
       </div>
     </aside>
+  );
+}
+
+function NavGroup({ items, path }: { items: { label: string; href: string; icon: LucideIcon }[]; path: string }) {
+  return (
+    <div className="space-y-0.5">
+      {items.map((item) => {
+        const isActive = item.href === "/" ? path === "/" : path.startsWith(item.href);
+        return <Item key={item.href} item={item} isActive={isActive} />;
+      })}
+    </div>
+  );
+}
+
+function Item({ item, isActive }: { item: { label: string; href: string; icon: LucideIcon }; isActive: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-[var(--r-md)] px-2.5 py-[7px] text-[12px] font-medium transition-all duration-100",
+        isActive ? "text-t1 bg-layer-3" : "text-t3 hover:text-t2 hover:bg-layer-2"
+      )}
+    >
+      {isActive && (
+        <motion.div
+          layoutId="nav-pill"
+          className="absolute left-0 top-[6px] bottom-[6px] w-[2.5px] rounded-full bg-brand"
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+        />
+      )}
+      <item.icon className={cn("h-[14px] w-[14px] shrink-0", isActive ? "text-brand" : "text-t4 group-hover:text-t3")} strokeWidth={isActive ? 2 : 1.5} />
+      {item.label}
+    </Link>
   );
 }

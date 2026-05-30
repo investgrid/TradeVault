@@ -147,6 +147,74 @@ export const expenses = pgTable("expenses", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── Trades ───
+export const trades = pgTable("trades", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accountId: uuid("account_id").references(() => accounts.id, { onDelete: "set null" }),
+  pair: text("pair").notNull(),
+  direction: text("direction").notNull(),
+  entryPrice: decimal("entry_price", { precision: 18, scale: 6 }),
+  exitPrice: decimal("exit_price", { precision: 18, scale: 6 }),
+  positionSize: decimal("position_size", { precision: 18, scale: 4 }),
+  pnl: decimal("pnl", { precision: 18, scale: 2 }),
+  riskReward: decimal("risk_reward", { precision: 6, scale: 2 }),
+  setup: text("setup"),
+  session: text("session"),
+  grade: text("grade"),
+  emotion: text("emotion"),
+  notes: text("notes"),
+  mistakes: text("mistakes"),
+  duration: text("duration"),
+  screenshotUrl: text("screenshot_url"),
+  status: text("status").notNull().default("closed"),
+  openedAt: timestamp("opened_at", { withTimezone: true }),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  tradeDate: date("trade_date").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Playbook Setups ───
+export const playbookSetups = pgTable("playbook_setups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  rules: text("rules"),
+  bestPair: text("best_pair"),
+  bestSession: text("best_session"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Risk Rules ───
+export const riskRules = pgTable("risk_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  ruleType: text("rule_type").notNull(),
+  limitValue: decimal("limit_value", { precision: 18, scale: 2 }).notNull(),
+  currentValue: decimal("current_value", { precision: 18, scale: 2 }).default("0"),
+  isActive: boolean("is_active").default(true),
+  resetFrequency: text("reset_frequency").default("daily"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ─── Daily Checklist ───
+export const dailyChecklist = pgTable("daily_checklist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  checkDate: date("check_date").notNull(),
+  items: text("items").notNull(),
+  completedItems: text("completed_items"),
+  mindsetScore: integer("mindset_score"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const aiInsights = pgTable("ai_insights", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

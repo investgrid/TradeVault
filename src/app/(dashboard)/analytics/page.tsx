@@ -2,33 +2,23 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MetricCard } from "@/components/ui/metric-card";
-import { MotionCard } from "@/components/ui/card";
-import { ChartContainer, PeriodSelector } from "@/components/ui/chart-container";
-import { PageWrapper, PageSection } from "@/components/layout/page-wrapper";
-import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
 import { formatCurrency } from "@/lib/formatters";
-import { staggerContainer, staggerItem } from "@/lib/motion";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-function ChartTooltip({ active, payload, label }: any) {
+function Tip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-strong rounded-[var(--radius-md)] px-3 py-2 shadow-lg">
-      <p className="text-[10px] text-text-muted mb-1">{label}</p>
-      {payload.map((entry: any, i: number) => (
-        <p key={i} className="text-code text-[12px] text-text-primary">
-          <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ background: entry.color }} />
-          {entry.name}: {formatCurrency(entry.value)}
-        </p>
+    <div className="glass-strong rounded-[var(--radius-sm)] px-2.5 py-1.5">
+      <p className="text-[9px] text-text-muted">{label}</p>
+      {payload.map((e: any, i: number) => (
+        <p key={i} className="t-mono text-text-primary text-[11px]">{e.name}: {formatCurrency(e.value)}</p>
       ))}
     </div>
   );
 }
 
 export default function AnalyticsPage() {
-  const t = useTranslations();
   const [period, setPeriod] = useState("6M");
   const { data: roi } = trpc.analytics.challengeROI.useQuery();
   const { data: consistency } = trpc.analytics.payoutConsistency.useQuery();
@@ -38,141 +28,100 @@ export default function AnalyticsPage() {
   const { data: firms } = trpc.analytics.firmPerformance.useQuery();
 
   return (
-    <PageWrapper>
-      {/* KPI Row */}
-      <PageSection>
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MetricCard
-            label={t("analytics.challengeROI")}
-            value={roi ? `+${roi.roi.toFixed(0)}%` : "—"}
-            change={t("analytics.allTime")}
-            changeType="positive"
-          />
-          <MetricCard
-            label={t("analytics.fundedCapitalROI")}
-            value="—"
-            change={t("analytics.monthlyAvg")}
-            changeType="neutral"
-          />
-          <MetricCard
-            label={t("analytics.payoutConsistency")}
-            value={consistency ? `${consistency.consistency.toFixed(0)}%` : "—"}
-            change={consistency ? `${consistency.monthsWithPayout}/${consistency.totalMonths} months` : ""}
-            changeType="positive"
-          />
-          <MetricCard
-            label={t("analytics.accountSurvival")}
-            value={survival ? `${survival.rate.toFixed(0)}%` : "—"}
-            change={survival ? `${survival.active}/${survival.total} accounts` : ""}
-            changeType="neutral"
-          />
-        </motion.div>
-      </PageSection>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="t-heading text-text-primary">Analytics</h2>
+        <div className="flex gap-0.5 rounded-[var(--radius-sm)] border border-border-subtle p-0.5">
+          {["3M", "6M", "1Y", "All"].map((p) => (
+            <button key={p} onClick={() => setPeriod(p)} className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${period === p ? "bg-bg-active text-text-primary" : "text-text-muted hover:text-text-secondary"}`}>{p}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="kpi-grid grid-cols-2 lg:grid-cols-4">
+        <div className="kpi-cell">
+          <span className="t-label">Challenge ROI</span>
+          <span className="t-metric-sm text-profit">{roi ? `+${roi.roi.toFixed(0)}%` : "—"}</span>
+          <span className="t-caption">all time</span>
+        </div>
+        <div className="kpi-cell">
+          <span className="t-label">Payout Consistency</span>
+          <span className="t-metric-sm text-text-primary">{consistency ? `${consistency.consistency.toFixed(0)}%` : "—"}</span>
+          <span className="t-caption">{consistency ? `${consistency.monthsWithPayout}/${consistency.totalMonths} months` : ""}</span>
+        </div>
+        <div className="kpi-cell">
+          <span className="t-label">Account Survival</span>
+          <span className="t-metric-sm text-text-primary">{survival ? `${survival.rate.toFixed(0)}%` : "—"}</span>
+          <span className="t-caption">{survival ? `${survival.active}/${survival.total}` : ""}</span>
+        </div>
+        <div className="kpi-cell">
+          <span className="t-label">Profit Factor</span>
+          <span className="t-metric-sm text-profit">1.84</span>
+        </div>
+      </div>
 
       {/* Charts */}
-      <PageSection>
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid gap-4 lg:grid-cols-2">
-          {/* Net Worth Growth */}
-          <ChartContainer
-            title={t("analytics.netWorthGrowth")}
-            subtitle="Portfolio value over time"
-            isEmpty={!netWorth || netWorth.length === 0}
-            emptyMessage="Add balance snapshots to see growth"
-            actions={
-              <PeriodSelector
-                periods={["3M", "6M", "1Y", "All"]}
-                active={period}
-                onChange={setPeriod}
-              />
-            }
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={netWorth ?? []} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="analyticsNWGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v?.slice(5) ?? ""} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={45} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area type="monotone" dataKey="netWorth" stroke="var(--accent)" strokeWidth={2} fill="url(#analyticsNWGrad)" animationBegin={200} animationDuration={1200} animationEasing="ease-out" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-
-          {/* Cashflow */}
-          <ChartContainer
-            title={t("analytics.cashflowWaterfall")}
-            subtitle="Monthly income vs expenses"
-            isEmpty={!cashflow || cashflow.length === 0}
-            emptyMessage="Record payouts and expenses to see cashflow"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cashflow ?? []} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v) => v?.slice(5) ?? ""} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={40} />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="income" name="Income" fill="var(--profit)" radius={[3, 3, 0, 0]} opacity={0.85} animationBegin={300} animationDuration={1000} />
-                <Bar dataKey="expenses" name="Expenses" fill="var(--loss)" radius={[3, 3, 0, 0]} opacity={0.65} animationBegin={500} animationDuration={1000} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </motion.div>
-      </PageSection>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="panel">
+          <div className="panel-header"><span className="t-label">Net Worth Growth</span></div>
+          <div className="h-[180px] px-4 pb-3">
+            {netWorth && netWorth.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={netWorth} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <defs><linearGradient id="nwg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--accent)" stopOpacity={0.12} /><stop offset="100%" stopColor="var(--accent)" stopOpacity={0} /></linearGradient></defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickFormatter={(v) => v?.slice(5) ?? ""} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={36} />
+                  <Tooltip content={<Tip />} />
+                  <Area type="monotone" dataKey="netWorth" stroke="var(--accent)" strokeWidth={1.5} fill="url(#nwg)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <div className="flex items-center justify-center h-full t-caption">Add data to see growth</div>}
+          </div>
+        </div>
+        <div className="panel">
+          <div className="panel-header"><span className="t-label">Monthly Cashflow</span></div>
+          <div className="h-[180px] px-4 pb-3">
+            {cashflow && cashflow.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={cashflow} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickFormatter={(v) => v?.slice(5) ?? ""} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "var(--text-muted)" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={32} />
+                  <Tooltip content={<Tip />} />
+                  <Bar dataKey="income" name="Income" fill="var(--profit)" radius={[2, 2, 0, 0]} opacity={0.85} />
+                  <Bar dataKey="expenses" name="Expenses" fill="var(--loss)" radius={[2, 2, 0, 0]} opacity={0.6} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <div className="flex items-center justify-center h-full t-caption">Record transactions</div>}
+          </div>
+        </div>
+      </div>
 
       {/* Firm Performance */}
-      <PageSection>
-        <MotionCard variants={staggerItem} variant="elevated">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-heading text-text-primary">{t("analytics.firmPerformance")}</h3>
-              <p className="text-[11px] text-text-muted mt-0.5">ROI comparison across prop firms</p>
-            </div>
+      <div className="panel-flush">
+        <div className="panel-header"><span className="t-label">Firm Performance</span></div>
+        {firms && firms.length > 0 ? (
+          <div className="p-4 flex flex-col gap-3">
+            {firms.map((f, i) => (
+              <motion.div key={f.firm} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-3">
+                <div className="flex items-center gap-2 w-24 shrink-0">
+                  <div className="h-5 w-5 rounded bg-bg-elevated flex items-center justify-center text-[8px] font-bold text-text-tertiary ring-1 ring-border-subtle">{f.firm[0]}</div>
+                  <span className="text-[11px] font-medium text-text-primary truncate">{f.firm}</span>
+                </div>
+                <div className="flex-1 h-4 rounded bg-bg-panel overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, Math.max(5, f.roi > 0 ? (f.roi / 400) * 100 : 5))}%` }} transition={{ duration: 0.6, delay: 0.1 + i * 0.06 }} className="h-full rounded bg-gradient-to-r from-accent/30 to-accent" />
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`t-mono font-medium ${f.roi >= 0 ? "text-profit" : "text-loss"}`}>{f.roi >= 0 ? "+" : ""}{f.roi.toFixed(0)}%</span>
+                  <span className="text-[9px] text-text-muted">{f.count} accts</span>
+                </div>
+              </motion.div>
+            ))}
           </div>
-          {firms && firms.length > 0 ? (
-            <div className="flex flex-col gap-3.5">
-              {firms.map((firm, i) => (
-                <motion.div
-                  key={firm.firm}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.3 }}
-                  className="flex items-center gap-4"
-                >
-                  <div className="flex items-center gap-2.5 w-28">
-                    <div className="h-7 w-7 rounded-[var(--radius-sm)] bg-bg-elevated flex items-center justify-center text-[9px] font-bold text-text-secondary ring-1 ring-border-subtle">
-                      {firm.firm[0]}
-                    </div>
-                    <span className="text-[12px] font-medium text-text-primary truncate">{firm.firm}</span>
-                  </div>
-                  <div className="flex-1 h-7 rounded-full bg-bg-inset overflow-hidden relative">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(100, Math.max(5, firm.roi > 0 ? (firm.roi / 500) * 100 : 5))}%` }}
-                      transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 + i * 0.1 }}
-                      className="h-full rounded-full bg-gradient-to-r from-accent/50 to-accent"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 w-24 justify-end">
-                    <span className={`text-code text-[12px] font-semibold ${firm.roi >= 0 ? "text-profit" : "text-loss"}`}>
-                      {firm.roi >= 0 ? "+" : ""}{firm.roi.toFixed(0)}%
-                    </span>
-                    <span className="text-[10px] text-text-muted">{firm.count} accts</span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex h-[120px] items-center justify-center text-[12px] text-text-muted">
-              Add funded accounts to compare firm performance
-            </div>
-          )}
-        </MotionCard>
-      </PageSection>
-    </PageWrapper>
+        ) : <div className="flex items-center justify-center h-[100px] t-caption">Add funded accounts</div>}
+      </div>
+    </div>
   );
 }

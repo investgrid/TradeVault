@@ -1,37 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { pageTransition, staggerItem } from "@/lib/motion";
 
-interface PageWrapperProps {
-  children: React.ReactNode;
-  className?: string;
+export function PageWrapper({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("flex flex-col gap-4", className)}>{children}</div>;
 }
 
-export function PageWrapper({ children, className }: PageWrapperProps) {
-  return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={pageTransition}
-      className={cn("space-y-6", className)}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-export function PageSection({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <motion.section variants={staggerItem} className={className}>
-      {children}
-    </motion.section>
-  );
+export function PageSection({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <section className={className}>{children}</section>;
 }

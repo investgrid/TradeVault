@@ -1,82 +1,48 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Plus, Wallet, ArrowUpDown, Receipt, RefreshCw, Search } from "lucide-react";
-import { useTranslations } from "@/i18n";
+import { useState, useEffect } from "react";
+import { Search, Plus, Bell } from "lucide-react";
+import { CommandPalette } from "@/components/command-palette";
 
-const pageTitles: Record<string, string> = {
-  "/": "Overview",
-  "/accounts": "Accounts",
-  "/payouts": "Payouts",
-  "/expenses": "Expenses",
-  "/analytics": "Analytics",
-  "/settings": "Settings",
+const TITLES: Record<string, string> = {
+  "/": "Control Center", "/accounts": "Accounts", "/payouts": "Payouts",
+  "/expenses": "Expenses", "/risk": "Risk Control", "/analytics": "Analytics",
+  "/journal": "Journal", "/trades": "Trades", "/calendar": "Calendar",
+  "/goals": "Goals", "/playbook": "Playbook", "/psychology": "Psychology",
+  "/insights": "Insights", "/reports": "Reports", "/settings": "Settings",
 };
 
 export function TopBar() {
   const pathname = usePathname();
-  const t = useTranslations();
-  const title = pageTitles[pathname] ?? "Overview";
+  const [cmd, setCmd] = useState(false);
+  const base = `/${pathname.split("/")[1] ?? ""}`;
+  const title = TITLES[pathname] ?? TITLES[base] ?? "Control Center";
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setCmd(true); } };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-20 flex h-12 items-center justify-between px-6 bg-bg-base/80 backdrop-blur-xl border-b border-border-subtle">
-      <h1 className="text-[14px] font-semibold text-text-primary tracking-tight">
-        {title}
-      </h1>
-
-      <div className="flex items-center gap-1.5">
-        {/* Search trigger */}
-        <button className="flex items-center gap-2 h-7 px-2.5 rounded-[var(--radius-sm)] bg-bg-elevated border border-border-subtle text-text-muted hover:text-text-secondary hover:border-border-default transition-all text-[11px]">
-          <Search className="h-3 w-3" />
-          <span className="hidden sm:inline">Search</span>
-          <kbd className="hidden sm:inline ml-2 text-[9px] text-text-muted bg-bg-surface px-1 py-0.5 rounded border border-border-subtle">⌘K</kbd>
-        </button>
-
-        {/* Quick Add */}
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <button className="flex items-center gap-1 h-7 px-2.5 rounded-[var(--radius-sm)] bg-accent text-white text-[12px] font-medium hover:bg-accent-hover transition-colors shadow-xs">
-              <Plus className="h-3 w-3" />
-              <span className="hidden sm:inline">Add</span>
-            </button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              align="end"
-              sideOffset={6}
-              className="z-50 min-w-[180px] rounded-[var(--radius-lg)] border border-border-default bg-bg-surface p-1 shadow-lg animate-slide-up"
-            >
-              <DropdownMenu.Item asChild>
-                <Link href="/accounts" className="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-hover hover:text-text-primary cursor-pointer">
-                  <Wallet className="h-3.5 w-3.5 text-text-muted" />
-                  New Account
-                </Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href="/payouts" className="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-hover hover:text-text-primary cursor-pointer">
-                  <ArrowUpDown className="h-3.5 w-3.5 text-text-muted" />
-                  New Payout
-                </Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href="/expenses" className="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-hover hover:text-text-primary cursor-pointer">
-                  <Receipt className="h-3.5 w-3.5 text-text-muted" />
-                  New Expense
-                </Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Separator className="my-1 h-px bg-border-subtle mx-1" />
-              <DropdownMenu.Item asChild>
-                <Link href="/accounts" className="flex items-center gap-2.5 rounded-[var(--radius-md)] px-2.5 py-2 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-hover hover:text-text-primary cursor-pointer">
-                  <RefreshCw className="h-3.5 w-3.5 text-text-muted" />
-                  Update Balance
-                </Link>
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-      </div>
-    </header>
+    <>
+      <header className="sticky top-0 z-20 flex h-[var(--header)] items-center justify-between px-6 border-b border-line-0 bg-layer-0/80 backdrop-blur-lg">
+        <h1 className="text-[13px] font-semibold text-t1 tracking-tight">{title}</h1>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setCmd(true)} className="flex items-center gap-1.5 h-[26px] px-2.5 rounded-[var(--r-sm)] border border-line-1 text-t4 hover:text-t2 hover:border-line-2 transition-all text-[10px]">
+            <Search className="h-3 w-3" /><span className="hidden sm:inline">Search</span>
+            <kbd className="hidden sm:inline ml-1 text-[8px] text-t4/60 bg-layer-2 px-1 rounded">⌘K</kbd>
+          </button>
+          <button className="relative h-[26px] w-[26px] flex items-center justify-center rounded-[var(--r-sm)] text-t4 hover:text-t2 hover:bg-layer-3 transition-colors">
+            <Bell className="h-3.5 w-3.5" />
+          </button>
+          <button className="flex items-center gap-1 h-[26px] px-2.5 rounded-[var(--r-sm)] bg-brand text-white text-[10px] font-medium hover:bg-brand-dim transition-colors">
+            <Plus className="h-3 w-3" /><span className="hidden sm:inline">Add</span>
+          </button>
+        </div>
+      </header>
+      <CommandPalette open={cmd} onClose={() => setCmd(false)} />
+    </>
   );
 }
