@@ -1,314 +1,115 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Plus, X, ArrowDownRight, Clock, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MetricCard } from "@/components/ui/metric-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PageWrapper, PageSection } from "@/components/layout/page-wrapper";
-import { useTranslations } from "@/i18n";
+import { Plus, X, Clock } from "lucide-react";
 import { trpc } from "@/server/trpc/client";
-import { staggerContainer } from "@/lib/motion";
-
-type PayoutStatus = "requested" | "processing" | "received" | "rejected";
-
-const STATUS_BADGE_MAP: Record<
-  PayoutStatus,
-  { variant: "profit" | "pending" | "default" | "loss"; dot: boolean }
-> = {
-  received: { variant: "profit", dot: true },
-  processing: { variant: "pending", dot: true },
-  requested: { variant: "default", dot: true },
-  rejected: { variant: "loss", dot: true },
-};
 
 export default function PayoutsPage() {
-  const t = useTranslations();
-  const [modalOpen, setModalOpen] = useState(false);
-
+  const [open, setOpen] = useState(false);
   const { data: payouts, isLoading, refetch } = trpc.income.list.useQuery();
   const { data: accounts } = trpc.accounts.list.useQuery();
-  const createMutation = trpc.income.create.useMutation({
-    onSuccess: () => {
-      refetch();
-      setModalOpen(false);
-      resetForm();
-    },
-  });
-  const deleteMutation = trpc.income.delete.useMutation({ onSuccess: () => refetch() });
+  const create = trpc.income.create.useMutation({ onSuccess: () => { refetch(); setOpen(false); resetForm(); } });
+  const del = trpc.income.delete.useMutation({ onSuccess: () => refetch() });
 
-  // Form state
   const [accountId, setAccountId] = useState("");
   const [amountGross, setAmountGross] = useState("");
   const [splitPercent, setSplitPercent] = useState("80");
   const [platformFee, setPlatformFee] = useState("");
   const [transferFee, setTransferFee] = useState("");
   const [method, setMethod] = useState("");
-  const [status, setStatus] = useState<PayoutStatus>("received");
+  const [status, setStatus] = useState<"requested" | "processing" | "received" | "rejected">("received");
   const [requestedAt, setRequestedAt] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
 
   const amountNet = useMemo(() => {
-    const gross = parseFloat(amountGross) || 0;
-    const split = parseFloat(splitPercent) || 0;
-    const pFee = parseFloat(platformFee) || 0;
-    const tFee = parseFloat(transferFee) || 0;
-    return ((gross * split) / 100 - pFee - tFee).toFixed(2);
+    const g = parseFloat(amountGross) || 0;
+    const s = parseFloat(splitPercent) || 0;
+    const pf = parseFloat(platformFee) || 0;
+    const tf = parseFloat(transferFee) || 0;
+    return ((g * s) / 100 - pf - tf).toFixed(2);
   }, [amountGross, splitPercent, platformFee, transferFee]);
 
-  function resetForm() {
-    setAccountId("");
-    setAmountGross("");
-    setSplitPercent("80");
-    setPlatformFee("");
-    setTransferFee("");
-    setMethod("");
-    setStatus("received");
-    setRequestedAt("");
-    setReceivedAt("");
-  }
+  function resetForm() { setAccountId(""); setAmountGross(""); setSplitPercent("80"); setPlatformFee(""); setTransferFee(""); setMethod(""); setStatus("received"); setRequestedAt(""); setReceivedAt(""); }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    createMutation.mutate({
-      accountId: accountId || undefined,
-      type: "payout",
-      amountGross,
+    create.mutate({
+      accountId: accountId || undefined, type: "payout", amountGross,
       amountNet: amountNet !== "0.00" ? amountNet : undefined,
-      splitPct: splitPercent || undefined,
-      platformFee: platformFee || undefined,
-      transferFee: transferFee || undefined,
-      method: method || undefined,
-      status,
-      requestedAt: requestedAt || undefined,
-      receivedAt: receivedAt || undefined,
+      splitPct: splitPercent || undefined, platformFee: platformFee || undefined,
+      transferFee: transferFee || undefined, method: method || undefined,
+      status, requestedAt: requestedAt || undefined, receivedAt: receivedAt || undefined,
     });
   }
 
-  // Compute header stats
   const stats = useMemo(() => {
-    if (!payouts) return { totalReceived: 0, pending: 0, inProcess: 0 };
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-
-    let totalReceived = 0;
-    let pending = 0;
-    let inProcess = 0;
-
+    if (!payouts) return { received: 0, pending: 0, processing: 0 };
+    let received = 0, pending = 0, processing = 0;
     for (const p of payouts) {
       const net = parseFloat(p.amountNet ?? p.amountGross ?? "0");
-      if (p.status === "received") {
-        const receivedDate = p.receivedAt ? new Date(p.receivedAt) : new Date(p.createdAt);
-        if (receivedDate >= yearStart) totalReceived += net;
-      } else if (p.status === "requested") {
-        pending += net;
-      } else if (p.status === "processing") {
-        inProcess += net;
-      }
+      if (p.status === "received") received += net;
+      else if (p.status === "requested") pending += net;
+      else if (p.status === "processing") processing += net;
     }
-
-    return { totalReceived, pending, inProcess };
+    return { received, pending, processing };
   }, [payouts]);
 
-  function getAccountName(accountId: string | null | undefined) {
-    if (!accountId || !accounts) return "Unknown";
-    const account = accounts.find((a: any) => a.id === accountId);
-    return account?.name ?? "Unknown";
-  }
-
-  function getAccountFirm(accountId: string | null | undefined) {
-    if (!accountId || !accounts) return "";
-    const account = accounts.find((a: any) => a.id === accountId);
-    return account?.firm ?? "";
-  }
-
-  function formatCurrency(value: number) {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
-
-  function formatDate(dateStr: string | null | undefined) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
+  const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
   return (
-    <PageWrapper>
-      {/* Header */}
-      <PageSection>
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div />
-        <Dialog.Root open={modalOpen} onOpenChange={setModalOpen}>
+        <h2 className="f-title">Payouts</h2>
+        <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger asChild>
-            <Button className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              {t("payouts.addPayout")}
-            </Button>
+            <button className="flex items-center gap-1 h-[26px] px-2.5 rounded-[var(--r-sm)] bg-brand text-white text-[10px] font-medium hover:bg-brand-dim transition-colors"><Plus className="h-3 w-3" /> Add Payout</button>
           </Dialog.Trigger>
-
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-              <div className="flex items-center justify-between mb-6">
-                <Dialog.Title className="text-base font-semibold text-text-primary">
-                  {t("payouts.addPayout")}
-                </Dialog.Title>
-                <Dialog.Close asChild>
-                  <button className="rounded-[var(--radius-sm)] p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors">
-                    <X className="h-4 w-4" />
-                  </button>
-                </Dialog.Close>
+            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[var(--r-xl)] border border-line-2 bg-layer-2 p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-5">
+                <Dialog.Title className="f-title">Record Payout</Dialog.Title>
+                <Dialog.Close className="p-1 text-t4 hover:text-t1 rounded"><X className="h-4 w-4" /></Dialog.Close>
               </div>
-
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {/* Account Select */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-text-secondary">
-                    Account
-                  </label>
-                  <select
-                    value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                    className="h-9 w-full rounded-[var(--radius-md)] border border-border-default bg-bg-elevated px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors duration-150"
-                  >
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="f-label block mb-1.5">Account</label>
+                  <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 focus:outline-none focus:border-brand">
                     <option value="">Select account...</option>
-                    {accounts?.map((account: any) => (
-                      <option key={account.id} value={account.id}>
-                        {account.firm ? `${account.firm} — ` : ""}
-                        {account.name}
-                      </option>
-                    ))}
+                    {accounts?.map((a) => <option key={a.id} value={a.id}>{a.firm ? `${a.firm} — ` : ""}{a.name}</option>)}
                   </select>
                 </div>
-
-                {/* Gross + Split row */}
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label={t("payouts.amountGross")}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={amountGross}
-                    onChange={(e) => setAmountGross(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label={t("payouts.splitPercent")}
-                    type="number"
-                    step="1"
-                    min="0"
-                    max="100"
-                    placeholder="80"
-                    value={splitPercent}
-                    onChange={(e) => setSplitPercent(e.target.value)}
-                  />
+                  <Inp label="Gross Amount" value={amountGross} onChange={setAmountGross} placeholder="5000" type="number" required />
+                  <Inp label="Split %" value={splitPercent} onChange={setSplitPercent} placeholder="80" type="number" />
                 </div>
-
-                {/* Net Amount (read-only computed) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-text-secondary">
-                    {t("payouts.amountNet")}
-                  </label>
-                  <div className="flex h-9 items-center rounded-[var(--radius-md)] border border-border-default bg-bg-elevated/50 px-3">
-                    <span className="font-numbers text-sm text-text-primary">
-                      ${amountNet}
-                    </span>
-                  </div>
+                <div className="rounded-[var(--r-md)] bg-layer-3 px-3 py-2 flex items-center justify-between">
+                  <span className="f-label">Net Amount</span>
+                  <span className="f-num text-t1">${amountNet}</span>
                 </div>
-
-                {/* Fees row */}
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label={t("payouts.platformFee")}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={platformFee}
-                    onChange={(e) => setPlatformFee(e.target.value)}
-                  />
-                  <Input
-                    label={t("payouts.transferFee")}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={transferFee}
-                    onChange={(e) => setTransferFee(e.target.value)}
-                  />
+                  <Inp label="Platform Fee" value={platformFee} onChange={setPlatformFee} placeholder="0" type="number" />
+                  <Inp label="Transfer Fee" value={transferFee} onChange={setTransferFee} placeholder="0" type="number" />
                 </div>
-
-                {/* Method + Status row */}
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label={t("payouts.method")}
-                    placeholder="Wire, Crypto, etc."
-                    value={method}
-                    onChange={(e) => setMethod(e.target.value)}
-                  />
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-text-secondary">
-                      Status
-                    </label>
-                    <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as PayoutStatus)}
-                      className="h-9 w-full rounded-[var(--radius-md)] border border-border-default bg-bg-elevated px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors duration-150"
-                    >
-                      <option value="requested">{t("payouts.statuses.requested")}</option>
-                      <option value="processing">{t("payouts.statuses.processing")}</option>
-                      <option value="received">{t("payouts.statuses.received")}</option>
-                      <option value="rejected">{t("payouts.statuses.rejected")}</option>
+                  <Inp label="Method" value={method} onChange={setMethod} placeholder="Wire, Crypto..." />
+                  <div>
+                    <label className="f-label block mb-1.5">Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 focus:outline-none focus:border-brand">
+                      <option value="received">Received</option>
+                      <option value="processing">Processing</option>
+                      <option value="requested">Requested</option>
                     </select>
                   </div>
                 </div>
-
-                {/* Dates row */}
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    label={t("payouts.requestedAt")}
-                    type="date"
-                    value={requestedAt}
-                    onChange={(e) => setRequestedAt(e.target.value)}
-                  />
-                  <Input
-                    label={t("payouts.receivedAt")}
-                    type="date"
-                    value={receivedAt}
-                    onChange={(e) => setReceivedAt(e.target.value)}
-                  />
+                  <Inp label="Requested At" value={requestedAt} onChange={setRequestedAt} type="date" />
+                  <Inp label="Received At" value={receivedAt} onChange={setReceivedAt} type="date" />
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-3 mt-2 pt-4 border-t border-border-subtle">
-                  <Dialog.Close asChild>
-                    <Button variant="ghost" type="button">
-                      {t("common.cancel")}
-                    </Button>
-                  </Dialog.Close>
-                  <Button type="submit" disabled={createMutation.isPending || !amountGross}>
-                    {createMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        {t("common.loading")}
-                      </>
-                    ) : (
-                      t("common.save")
-                    )}
-                  </Button>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setOpen(false)} className="flex-1 h-9 rounded-[var(--r-md)] border border-line-1 text-[12px] font-medium text-t2 hover:bg-layer-3 transition-colors">Cancel</button>
+                  <button type="submit" disabled={create.isPending || !amountGross} className="flex-1 h-9 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors disabled:opacity-50">{create.isPending ? "Saving..." : "Save"}</button>
                 </div>
               </form>
             </Dialog.Content>
@@ -316,120 +117,62 @@ export default function PayoutsPage() {
         </Dialog.Root>
       </div>
 
-      </PageSection>
+      {/* KPIs */}
+      <div className="metric-grid grid-cols-2 lg:grid-cols-4">
+        <div className="metric-cell"><span className="f-label">Total Received (YTD)</span><span className="f-value text-up">{fmt(stats.received)}</span></div>
+        <div className="metric-cell"><span className="f-label">Pending</span><span className="f-value text-warn">{fmt(stats.pending)}</span></div>
+        <div className="metric-cell"><span className="f-label">Processing</span><span className="f-value text-t1">{fmt(stats.processing)}</span></div>
+        <div className="metric-cell"><span className="f-label">Total Payouts</span><span className="f-value text-t1">{payouts?.length ?? 0}</span></div>
+      </div>
 
-      {/* Header Stats */}
-      <PageSection>
-      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard
-          label={t("payouts.totalReceived")}
-          value={formatCurrency(stats.totalReceived)}
-          change="+34% vs last year"
-          changeType="positive"
-        />
-        <MetricCard
-          label={t("payouts.pending")}
-          value={formatCurrency(stats.pending)}
-          change={`${payouts?.filter((p) => p.status === "requested").length ?? 0} payouts`}
-          changeType="neutral"
-        />
-        <MetricCard
-          label={t("payouts.inProcess")}
-          value={formatCurrency(stats.inProcess)}
-          change="Est. 3-5 days"
-          changeType="neutral"
-        />
-        <MetricCard
-          label={t("payouts.nextEligible")}
-          value="—"
-          change=""
-          changeType="neutral"
-        />
-      </motion.div>
-      </PageSection>
-
-      {/* Payouts List */}
-      <PageSection>
-      <Card variant="default" className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
-          <h2 className="text-sm font-medium text-text-primary">
-            {t("payouts.recentPayouts")}
-          </h2>
-          <div className="flex items-center gap-2">
-            <ArrowDownRight className="h-3.5 w-3.5 text-text-muted" />
-            <span className="text-xs text-text-muted">
-              {payouts?.length ?? 0} records
-            </span>
-          </div>
-        </div>
-
+      {/* List */}
+      <div className="card-flush">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
-            <span className="ml-2 text-sm text-text-muted">{t("common.loading")}</span>
-          </div>
+          <div className="flex items-center justify-center py-16 f-sub">Loading...</div>
         ) : !payouts?.length ? (
           <div className="flex flex-col items-center justify-center py-16 gap-2">
-            <Clock className="h-8 w-8 text-text-muted/50" />
-            <p className="text-sm text-text-muted">No payouts yet</p>
+            <Clock className="h-6 w-6 text-t4" />
+            <p className="f-sub">No payouts yet</p>
           </div>
         ) : (
-          <div className="divide-y divide-border-subtle">
-            {payouts.map((payout: any) => {
-              const statusKey = (payout.status as PayoutStatus) ?? "requested";
-              const badgeConfig = STATUS_BADGE_MAP[statusKey];
-              const firmName = getAccountFirm(payout.accountId);
-              const accountName = getAccountName(payout.accountId);
-              const gross = parseFloat(payout.amountGross ?? "0");
-              const net = parseFloat(payout.amountNet ?? payout.amountGross ?? "0");
-              const displayDate = payout.receivedAt ?? payout.requestedAt ?? payout.createdAt;
-
+          <div className="divide-y divide-line-0">
+            {payouts.map((p: any) => {
+              const net = parseFloat(p.amountNet ?? p.amountGross ?? "0");
+              const gross = parseFloat(p.amountGross ?? "0");
+              const accName = accounts?.find((a) => a.id === p.accountId)?.name ?? "Payout";
+              const firm = accounts?.find((a) => a.id === p.accountId)?.firm;
               return (
-                <div
-                  key={payout.id}
-                  className="group flex items-center justify-between px-5 py-4 transition-colors hover:bg-bg-elevated/40"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-bg-elevated text-xs font-bold text-text-secondary">
-                      {firmName?.[0]?.toUpperCase() ?? "P"}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-text-primary">
-                        {firmName ? `${firmName} — ` : ""}{accountName}
-                      </span>
-                      <span className="text-xs text-text-muted">
-                        {formatDate(displayDate)}
-                      </span>
+                <div key={p.id} className="group flex items-center justify-between px-[18px] py-3.5 hover:bg-layer-3/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`dot ${p.status === "received" ? "dot-up" : p.status === "processing" ? "dot-warn" : "dot-off"}`} />
+                    <div>
+                      <div className="text-[12px] font-medium text-t1">{firm ? `${firm} — ` : ""}{accName}</div>
+                      <div className="f-micro">{p.receivedAt ?? p.requestedAt ?? ""}{p.method ? ` · ${p.method}` : ""}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-end">
-                      <span className="font-numbers text-sm text-text-primary">
-                        {formatCurrency(net)}
-                      </span>
-                      {gross !== net && (
-                        <span className="font-numbers text-xs text-text-muted">
-                          gross {formatCurrency(gross)}
-                        </span>
-                      )}
+                    <div className="text-right">
+                      <div className="f-num text-t1">{fmt(net)}</div>
+                      {gross !== net && <div className="f-micro">gross {fmt(gross)}</div>}
                     </div>
-                    <Badge variant={badgeConfig.variant} dot={badgeConfig.dot}>
-                      {t(`payouts.statuses.${statusKey}`)}
-                    </Badge>
-                    <button
-                      onClick={() => { if (confirm("Delete this payout?")) deleteMutation.mutate({ id: payout.id }); }}
-                      className="opacity-0 group-hover:opacity-100 rounded-[var(--radius-xs)] p-1 text-text-muted hover:text-loss hover:bg-loss/10 transition-all"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    <span className={`pill ${p.status === "received" ? "pill-up" : p.status === "processing" ? "pill-warn" : "pill-muted"}`}>{p.status}</span>
+                    <button onClick={() => { if (confirm("Delete?")) del.mutate({ id: p.id }); }} className="opacity-0 group-hover:opacity-100 p-1 text-t4 hover:text-down transition-all"><X className="h-3 w-3" /></button>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </Card>
-      </PageSection>
-    </PageWrapper>
+      </div>
+    </div>
+  );
+}
+
+function Inp({ label, value, onChange, placeholder, type = "text", required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean }) {
+  return (
+    <div>
+      <label className="f-label block mb-1.5">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 placeholder:text-t4 focus:outline-none focus:border-brand transition-colors" />
+    </div>
   );
 }

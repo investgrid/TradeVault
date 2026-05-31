@@ -1,117 +1,69 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { MetricCard } from "@/components/ui/metric-card";
-import { Input } from "@/components/ui/input";
-import { PageWrapper, PageSection } from "@/components/layout/page-wrapper";
-import { useTranslations } from "@/i18n";
-import { trpc } from "@/server/trpc/client";
-import { staggerContainer } from "@/lib/motion";
 import { Plus, X } from "lucide-react";
+import { trpc } from "@/server/trpc/client";
 
 const CATEGORIES = ["challenge_fees", "failed_challenge_fees", "subscriptions", "vps", "data_feeds", "education", "software", "banking_fees", "crypto_fees", "taxes_estimated", "other"] as const;
+const CAT_LABELS: Record<string, string> = { challenge_fees: "Challenge Fees", failed_challenge_fees: "Failed Challenges", subscriptions: "Subscriptions", vps: "VPS", data_feeds: "Data Feeds", education: "Education", software: "Software", banking_fees: "Banking", crypto_fees: "Crypto Fees", taxes_estimated: "Taxes", other: "Other" };
 
 export default function ExpensesPage() {
-  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [form, setForm] = useState({
-    category: "challenge_fees", amount: "", vendor: "", description: "",
-    expenseDate: new Date().toISOString().split("T")[0], isRecurring: false, recurrenceFrequency: "monthly",
-  });
+  const [form, setForm] = useState({ category: "challenge_fees", amount: "", vendor: "", description: "", expenseDate: new Date().toISOString().slice(0, 10), isRecurring: false });
 
   const { data: expenses, refetch } = trpc.expenses.list.useQuery();
-  const createMutation = trpc.expenses.create.useMutation({ onSuccess: () => { refetch(); setOpen(false); } });
-  const deleteMutation = trpc.expenses.delete.useMutation({ onSuccess: () => refetch() });
-
   const { data: payouts } = trpc.income.list.useQuery();
+  const create = trpc.expenses.create.useMutation({ onSuccess: () => { refetch(); setOpen(false); setForm({ ...form, amount: "", vendor: "", description: "" }); } });
+  const del = trpc.expenses.delete.useMutation({ onSuccess: () => refetch() });
 
   const filtered = expenses?.filter((e) => filter === "all" || e.category === filter) ?? [];
-  const thisMonth = expenses?.filter((e) => {
-    const d = new Date(e.expenseDate);
-    const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).reduce((s, e) => s + Number(e.amount), 0) ?? 0;
+  const thisMonth = expenses?.filter((e) => { const d = new Date(e.expenseDate); const n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear(); }).reduce((s, e) => s + Number(e.amount), 0) ?? 0;
   const ytd = expenses?.reduce((s, e) => s + Number(e.amount), 0) ?? 0;
-
   const totalIncome = payouts?.filter((p) => p.status === "received").reduce((s, p) => s + Number(p.amountNet ?? p.amountGross ?? 0), 0) ?? 0;
-  const expenseRatio = totalIncome > 0 ? `${((ytd / totalIncome) * 100).toFixed(0)}%` : "—";
-  const expenseRatioType = totalIncome > 0 && (ytd / totalIncome) > 0.3 ? "negative" as const : "neutral" as const;
-
-  const categoryTotals = expenses?.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] ?? 0) + Number(e.amount);
-    return acc;
-  }, {} as Record<string, number>) ?? {};
-  const topCategoryKey = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const topCategory = topCategoryKey ? t(`expenses.categories.${topCategoryKey}`) : "—";
+  const ratio = totalIncome > 0 ? ((ytd / totalIncome) * 100).toFixed(0) + "%" : "—";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    createMutation.mutate({
-      category: form.category,
-      amount: form.amount,
-      vendor: form.vendor || undefined,
-      description: form.description || undefined,
-      expenseDate: form.expenseDate,
-      isRecurring: form.isRecurring,
-      recurrenceFrequency: form.isRecurring ? form.recurrenceFrequency as any : undefined,
-    });
+    create.mutate({ category: form.category, amount: form.amount, vendor: form.vendor || undefined, description: form.description || undefined, expenseDate: form.expenseDate, isRecurring: form.isRecurring });
   }
 
   return (
-    <PageWrapper>
-      <PageSection>
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-text-secondary">{t("expenses.subtitle")}</p>
+        <h2 className="f-title">Expenses</h2>
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger asChild>
-            <Button className="gap-1.5"><Plus className="h-3.5 w-3.5" />{t("expenses.addExpense")}</Button>
+            <button className="flex items-center gap-1 h-[26px] px-2.5 rounded-[var(--r-sm)] bg-brand text-white text-[10px] font-medium hover:bg-brand-dim transition-colors"><Plus className="h-3 w-3" /> Add Expense</button>
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-6 card-shadow">
+            <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[var(--r-xl)] border border-line-2 bg-layer-2 p-6 shadow-xl">
               <div className="flex items-center justify-between mb-5">
-                <Dialog.Title className="text-[15px] font-semibold text-text-primary">{t("expenses.addExpense")}</Dialog.Title>
-                <Dialog.Close asChild><button className="text-text-muted hover:text-text-secondary"><X className="h-4 w-4" /></button></Dialog.Close>
+                <Dialog.Title className="f-title">Add Expense</Dialog.Title>
+                <Dialog.Close className="p-1 text-t4 hover:text-t1 rounded"><X className="h-4 w-4" /></Dialog.Close>
               </div>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-text-secondary">{t("expenses.category")}</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="h-9 rounded-[var(--radius-md)] border border-border-default bg-bg-elevated px-3 text-[13px] text-text-primary">
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{t(`expenses.categories.${c}`)}</option>)}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="f-label block mb-1.5">Category</label>
+                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 focus:outline-none focus:border-brand">
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input id="amount" label={t("expenses.amount")} type="number" placeholder="499" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
-                  <Input id="date" label={t("expenses.date")} type="date" value={form.expenseDate} onChange={(e) => setForm({ ...form, expenseDate: e.target.value })} required />
+                  <Inp label="Amount" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} placeholder="499" type="number" required />
+                  <Inp label="Date" value={form.expenseDate} onChange={(v) => setForm({ ...form, expenseDate: v })} type="date" required />
                 </div>
-                <Input id="vendor" label={t("expenses.vendor")} placeholder="TradingView, FTMO..." value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} />
-                <Input id="desc" label={t("expenses.description")} placeholder="Optional note" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" id="recurring" checked={form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
-                    className="h-4 w-4 rounded border-border-default bg-bg-elevated accent-accent" />
-                  <label htmlFor="recurring" className="text-[12px] text-text-secondary">{t("expenses.recurring")}</label>
-                  {form.isRecurring && (
-                    <select value={form.recurrenceFrequency} onChange={(e) => setForm({ ...form, recurrenceFrequency: e.target.value })}
-                      className="h-7 rounded-[var(--radius-sm)] border border-border-default bg-bg-elevated px-2 text-[11px] text-text-primary">
-                      <option value="weekly">{t("expenses.frequencies.weekly")}</option>
-                      <option value="monthly">{t("expenses.frequencies.monthly")}</option>
-                      <option value="quarterly">{t("expenses.frequencies.quarterly")}</option>
-                      <option value="annual">{t("expenses.frequencies.annual")}</option>
-                    </select>
-                  )}
-                </div>
+                <Inp label="Vendor" value={form.vendor} onChange={(v) => setForm({ ...form, vendor: v })} placeholder="TradingView, FTMO..." />
+                <Inp label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Optional note" />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })} className="h-3.5 w-3.5 rounded border-line-1 accent-brand" />
+                  <span className="text-[11px] text-t2">Recurring expense</span>
+                </label>
                 <div className="flex gap-3 pt-2">
-                  <Button variant="ghost" type="button" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
-                  <Button type="submit" className="flex-1" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? t("common.loading") : t("common.save")}
-                  </Button>
+                  <button type="button" onClick={() => setOpen(false)} className="flex-1 h-9 rounded-[var(--r-md)] border border-line-1 text-[12px] font-medium text-t2 hover:bg-layer-3 transition-colors">Cancel</button>
+                  <button type="submit" disabled={create.isPending} className="flex-1 h-9 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors disabled:opacity-50">{create.isPending ? "Saving..." : "Save"}</button>
                 </div>
               </form>
             </Dialog.Content>
@@ -119,66 +71,56 @@ export default function ExpensesPage() {
         </Dialog.Root>
       </div>
 
-      </PageSection>
+      {/* KPIs */}
+      <div className="metric-grid grid-cols-2 lg:grid-cols-4">
+        <div className="metric-cell"><span className="f-label">This Month</span><span className="f-value text-down">${thisMonth.toLocaleString()}</span></div>
+        <div className="metric-cell"><span className="f-label">Year to Date</span><span className="f-value text-t1">${ytd.toLocaleString()}</span></div>
+        <div className="metric-cell"><span className="f-label">Expense Ratio</span><span className={`f-value ${totalIncome > 0 && (ytd / totalIncome) > 0.3 ? "text-down" : "text-t1"}`}>{ratio}</span></div>
+        <div className="metric-cell"><span className="f-label">Total Entries</span><span className="f-value text-t1">{expenses?.length ?? 0}</span></div>
+      </div>
 
-      <PageSection>
-      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label={t("expenses.thisMonth")} value={`$${thisMonth.toLocaleString()}`} changeType="negative" />
-        <MetricCard label={t("expenses.yearToDate")} value={`$${ytd.toLocaleString()}`} />
-        <MetricCard label={t("expenses.expenseRatio")} value={expenseRatio} changeType={expenseRatioType} />
-        <MetricCard label={t("expenses.topCategory")} value={topCategory} />
-      </motion.div>
-      </PageSection>
+      {/* Filter */}
+      <div className="flex items-center gap-0.5 overflow-x-auto rounded-[var(--r-sm)] border border-line-1 p-0.5 w-fit">
+        <button onClick={() => setFilter("all")} className={`px-2 py-1 rounded-[var(--r-sm)] text-[9px] font-medium whitespace-nowrap transition-colors ${filter === "all" ? "bg-layer-4 text-t1" : "text-t4 hover:text-t2"}`}>All</button>
+        {CATEGORIES.slice(0, 6).map((c) => (
+          <button key={c} onClick={() => setFilter(c)} className={`px-2 py-1 rounded-[var(--r-sm)] text-[9px] font-medium whitespace-nowrap transition-colors ${filter === c ? "bg-layer-4 text-t1" : "text-t4 hover:text-t2"}`}>{CAT_LABELS[c]}</button>
+        ))}
+      </div>
 
-      <PageSection>
-      <Card variant="elevated" className="overflow-hidden p-0">
-        <div className="border-b border-border-subtle px-5 py-3 overflow-x-auto">
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setFilter("all")} className={`whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-semibold ${filter === "all" ? "bg-accent-soft text-accent" : "text-text-muted hover:text-text-secondary"}`}>
-              {t("common.all")}
-            </button>
-            {CATEGORIES.slice(0, 6).map((c) => (
-              <button key={c} onClick={() => setFilter(c)} className={`whitespace-nowrap rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-semibold ${filter === c ? "bg-accent-soft text-accent" : "text-text-muted hover:text-text-secondary"}`}>
-                {t(`expenses.categories.${c}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="divide-y divide-border-subtle">
-          {filtered.length === 0 && (
-            <div className="flex items-center justify-center py-12 text-[13px] text-text-muted">
-              {expenses ? "No expenses found" : t("common.loading")}
-            </div>
-          )}
-          {filtered.map((expense) => (
-            <div key={expense.id} className="group flex items-center justify-between px-5 py-4 transition-all hover:bg-bg-elevated/50">
-              <div className="flex items-center gap-3.5">
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-medium text-text-primary">
-                    {expense.vendor ?? t(`expenses.categories.${expense.category}`)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-text-muted">{expense.expenseDate}</span>
-                    {expense.isRecurring && <Badge variant="accent">Recurring</Badge>}
+      {/* List */}
+      <div className="card-flush">
+        {filtered.length === 0 ? (
+          <div className="flex items-center justify-center py-16 f-sub">{expenses ? "No expenses found" : "Loading..."}</div>
+        ) : (
+          <div className="divide-y divide-line-0">
+            {filtered.map((exp) => (
+              <div key={exp.id} className="group flex items-center justify-between px-[18px] py-3.5 hover:bg-layer-3/50 transition-colors">
+                <div>
+                  <div className="text-[12px] font-medium text-t1">{exp.vendor ?? CAT_LABELS[exp.category] ?? exp.category}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="f-micro">{exp.expenseDate}</span>
+                    <span className="pill pill-muted text-[8px]">{CAT_LABELS[exp.category] ?? exp.category}</span>
+                    {exp.isRecurring && <span className="pill pill-brand text-[8px]">Recurring</span>}
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <span className="f-num font-medium text-down">-${Number(exp.amount).toLocaleString()}</span>
+                  <button onClick={() => { if (confirm("Delete?")) del.mutate({ id: exp.id }); }} className="opacity-0 group-hover:opacity-100 p-1 text-t4 hover:text-down transition-all"><X className="h-3 w-3" /></button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-numbers text-[13px] font-medium text-loss">
-                  -${Number(expense.amount).toLocaleString()}
-                </span>
-                <button
-                  onClick={() => { if (confirm("Delete this expense?")) deleteMutation.mutate({ id: expense.id }); }}
-                  className="opacity-0 group-hover:opacity-100 rounded-[var(--radius-xs)] p-1 text-text-muted hover:text-loss hover:bg-loss/10 transition-all"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-      </PageSection>
-    </PageWrapper>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Inp({ label, value, onChange, placeholder, type = "text", required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean }) {
+  return (
+    <div>
+      <label className="f-label block mb-1.5">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 placeholder:text-t4 focus:outline-none focus:border-brand transition-colors" />
+    </div>
   );
 }
