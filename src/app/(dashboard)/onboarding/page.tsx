@@ -3,302 +3,120 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useTranslations } from "@/i18n";
 import { trpc } from "@/server/trpc/client";
-import { ArrowRight, ArrowLeft, Check, Wallet, BarChart3, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check, Wallet, Shield, Zap } from "lucide-react";
 
-type Step = "welcome" | "account" | "details" | "complete";
-const STEPS: Step[] = ["welcome", "account", "details", "complete"];
-
-const slideVariants = {
-  enter: (direction: number) => ({ x: direction > 0 ? 80 : -80, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({ x: direction > 0 ? -80 : 80, opacity: 0 }),
-};
+type Step = "welcome" | "account" | "complete";
 
 export default function OnboardingPage() {
-  const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState<Step>("welcome");
-  const [direction, setDirection] = useState(1);
-  const [accountData, setAccountData] = useState({
-    name: "",
-    firm: "",
-    balance: "",
-    drawdownType: "static",
-    maxDrawdown: "",
-    challengeCost: "",
-  });
+  const [form, setForm] = useState({ name: "", firm: "", balance: "", drawdownType: "static", drawdownPct: "10", splitPct: "80" });
+  const create = trpc.accounts.create.useMutation({ onSuccess: () => setStep("complete") });
 
-  const createAccount = trpc.accounts.create.useMutation({
-    onSuccess: () => router.push("/"),
-  });
-
-  function goTo(next: Step) {
-    const curr = STEPS.indexOf(step);
-    const nextIdx = STEPS.indexOf(next);
-    setDirection(nextIdx > curr ? 1 : -1);
-    setStep(next);
+  function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    create.mutate({
+      name: form.name, type: "funded", firm: form.firm || undefined,
+      currentBalance: form.balance, initialBalance: form.balance, currency: "USD",
+      funded: { maxDrawdownType: form.drawdownType as any, maxDrawdownPct: form.drawdownPct, profitSplitPct: form.splitPct },
+    });
   }
-
-  function handleFinish() {
-    if (accountData.name && accountData.balance) {
-      createAccount.mutate({
-        name: accountData.name,
-        type: "funded",
-        firm: accountData.firm || undefined,
-        currentBalance: accountData.balance,
-        initialBalance: accountData.balance,
-        funded: {
-          maxDrawdownType: accountData.drawdownType as any,
-          maxDrawdownPct: accountData.maxDrawdown || undefined,
-          challengeCost: accountData.challengeCost || undefined,
-          profitSplitPct: "80",
-        },
-      });
-    } else {
-      router.push("/");
-    }
-  }
-
-  const currentIdx = STEPS.indexOf(step);
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center">
-      <div className="w-full max-w-lg">
-        {/* Progress */}
-        <div className="mb-8 flex items-center justify-center gap-2">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <motion.div
-                animate={{
-                  scale: step === s ? 1.1 : 1,
-                  backgroundColor: currentIdx > i
-                    ? "rgba(0, 217, 126, 0.15)"
-                    : step === s
-                    ? "var(--accent)"
-                    : "var(--bg-elevated)",
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold"
-              >
-                {currentIdx > i ? (
-                  <Check className="h-3.5 w-3.5 text-profit" />
-                ) : (
-                  <span className={step === s ? "text-white" : "text-text-muted"}>{i + 1}</span>
-                )}
-              </motion.div>
-              {i < 3 && (
-                <motion.div
-                  className="h-px w-8 rounded-full"
-                  animate={{
-                    backgroundColor: currentIdx > i ? "rgba(0, 217, 126, 0.3)" : "var(--border-subtle)",
-                  }}
-                  transition={{ duration: 0.3 }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Step Content */}
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={step}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            {step === "welcome" && (
-              <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-8 text-center gradient-border card-shadow">
-                <div className="absolute inset-0 bg-gradient-to-b from-accent/[0.03] to-transparent" />
-                <div className="relative flex flex-col items-center gap-6">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft border border-accent/10">
-                    <img src="/logo.png" alt="TradeVault" width={36} height={36} className="rounded-lg" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <h1 className="text-heading-lg text-text-primary">{t("onboarding.welcome")}</h1>
-                    <p className="text-[13px] leading-relaxed text-text-secondary max-w-sm">
-                      {t("onboarding.addFirst")}
-                    </p>
-                  </div>
-                  <div className="grid w-full grid-cols-3 gap-3 pt-2">
-                    {[
-                      { icon: Wallet, label: "Multi-Account", color: "text-accent" },
-                      { icon: BarChart3, label: "Analytics", color: "text-profit" },
-                      { icon: Shield, label: "Risk Control", color: "text-pending" },
-                    ].map(({ icon: Icon, label, color }) => (
-                      <div key={label} className="flex flex-col items-center gap-2.5 rounded-[var(--radius-lg)] border border-border-subtle bg-bg-elevated/50 p-4">
-                        <Icon className={`h-5 w-5 ${color}`} />
-                        <span className="text-[10px] font-medium text-text-secondary">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="gradient" className="mt-2 w-full gap-2" onClick={() => goTo("account")}>
-                    {t("onboarding.addAccount")}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="w-full max-w-md">
+        <AnimatePresence mode="wait">
+          {step === "welcome" && (
+            <motion.div key="welcome" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="card-hero noise p-8 text-center space-y-6">
+              <div className="h-14 w-14 rounded-xl bg-brand/10 flex items-center justify-center mx-auto ring-1 ring-brand/20">
+                <Zap className="h-6 w-6 text-brand" />
               </div>
-            )}
-
-            {step === "account" && (
-              <div className="rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-8 card-shadow gradient-border">
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-heading-lg text-text-primary">{t("accounts.addAccount")}</h2>
-                    <p className="text-[13px] text-text-secondary">Basic info about your funded account</p>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <Input
-                      id="name"
-                      label={t("accounts.name")}
-                      placeholder="FTMO #123456"
-                      icon={<Wallet className="h-3.5 w-3.5" />}
-                      value={accountData.name}
-                      onChange={(e) => setAccountData({ ...accountData, name: e.target.value })}
-                    />
-                    <Input
-                      id="firm"
-                      label={t("accounts.firm")}
-                      placeholder="FTMO, Apex, MyFundedFX..."
-                      value={accountData.firm}
-                      onChange={(e) => setAccountData({ ...accountData, firm: e.target.value })}
-                    />
-                    <Input
-                      id="balance"
-                      label={t("accounts.balance")}
-                      type="number"
-                      placeholder="50000"
-                      value={accountData.balance}
-                      onChange={(e) => setAccountData({ ...accountData, balance: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="ghost" onClick={() => goTo("welcome")} icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-                      {t("common.back")}
-                    </Button>
-                    <Button
-                      className="flex-1 gap-2"
-                      onClick={() => goTo("details")}
-                      disabled={!accountData.name || !accountData.balance}
-                    >
-                      {t("common.next")}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              <div>
+                <h1 className="f-display text-t1 mb-2">Welcome to TradeVault</h1>
+                <p className="text-[13px] text-t3 leading-relaxed max-w-sm mx-auto">
+                  Your trading control center. Let&apos;s set up your first account to start tracking capital, risk, and performance.
+                </p>
               </div>
-            )}
-
-            {step === "details" && (
-              <div className="rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-8 card-shadow gradient-border">
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-heading-lg text-text-primary">Risk Parameters</h2>
-                    <p className="text-[13px] text-text-secondary">Configure drawdown and challenge details</p>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[12px] font-medium text-text-secondary">
-                        {t("accounts.funded.drawdownType")}
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(["static", "trailing", "eod_trailing"] as const).map((type) => (
-                          <button
-                            key={type}
-                            onClick={() => setAccountData({ ...accountData, drawdownType: type })}
-                            className={`rounded-[var(--radius-md)] border px-3 py-2.5 text-[11px] font-semibold transition-all ${
-                              accountData.drawdownType === type
-                                ? "border-accent bg-accent-soft text-accent shadow-sm"
-                                : "border-border-subtle bg-bg-elevated text-text-secondary hover:border-border-default"
-                            }`}
-                          >
-                            {t(`accounts.funded.drawdownTypes.${type}`)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <Input
-                      id="maxDrawdown"
-                      label="Max Drawdown (%)"
-                      type="number"
-                      placeholder="10"
-                      value={accountData.maxDrawdown}
-                      onChange={(e) => setAccountData({ ...accountData, maxDrawdown: e.target.value })}
-                    />
-                    <Input
-                      id="challengeCost"
-                      label={t("accounts.funded.challengeCost")}
-                      type="number"
-                      placeholder="499"
-                      value={accountData.challengeCost}
-                      onChange={(e) => setAccountData({ ...accountData, challengeCost: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="ghost" onClick={() => goTo("account")} icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-                      {t("common.back")}
-                    </Button>
-                    <Button className="flex-1 gap-2" onClick={() => goTo("complete")}>
-                      {t("common.next")}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              <div className="flex flex-col gap-2">
+                <Feature icon={Wallet} text="Track all your funded accounts in one place" />
+                <Feature icon={Shield} text="Monitor drawdown and risk in real-time" />
+                <Feature icon={Zap} text="Deep analytics on your trading business" />
               </div>
-            )}
+              <button onClick={() => setStep("account")} className="w-full h-10 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors flex items-center justify-center gap-2">
+                Get Started <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </motion.div>
+          )}
 
-            {step === "complete" && (
-              <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-border-default bg-bg-surface p-8 text-center card-shadow">
-                <div className="absolute inset-0 bg-gradient-to-b from-profit/[0.03] to-transparent" />
-                <div className="relative flex flex-col items-center gap-6">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                    className="flex h-16 w-16 items-center justify-center rounded-full bg-profit/10 glow-profit"
-                  >
-                    <Sparkles className="h-7 w-7 text-profit" />
-                  </motion.div>
-                  <div className="flex flex-col gap-2">
-                    <h2 className="text-heading-lg text-text-primary">You&apos;re all set!</h2>
-                    <p className="text-[13px] leading-relaxed text-text-secondary">
-                      Your account <span className="font-medium text-text-primary">{accountData.name}</span> is ready.
-                    </p>
-                  </div>
-
-                  <div className="w-full rounded-[var(--radius-lg)] border border-border-subtle bg-bg-elevated/50 p-4">
-                    <div className="flex flex-col gap-2.5 text-left">
-                      {[
-                        ["Account", accountData.name],
-                        ["Firm", accountData.firm || "—"],
-                        ["Balance", `$${Number(accountData.balance || 0).toLocaleString()}`],
-                        ["Max DD", `${accountData.maxDrawdown || "10"}%`],
-                      ].map(([label, value]) => (
-                        <div key={label} className="flex justify-between text-[12px]">
-                          <span className="text-text-muted">{label}</span>
-                          <span className="text-code text-text-primary">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button variant="gradient" className="w-full gap-2" onClick={handleFinish} isLoading={createAccount.isPending}>
-                    Go to Dashboard
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
+          {step === "account" && (
+            <motion.div key="account" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="card card-body space-y-5">
+              <div>
+                <h2 className="f-title mb-1">Add your first account</h2>
+                <p className="f-sub">Start with your primary funded account</p>
               </div>
-            )}
-          </motion.div>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <Inp label="Account Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="FTMO 100k #1234" required />
+                <Inp label="Prop Firm" value={form.firm} onChange={(v) => setForm({ ...form, firm: v })} placeholder="FTMO, Apex, TFT..." />
+                <Inp label="Current Balance" value={form.balance} onChange={(v) => setForm({ ...form, balance: v })} placeholder="50000" type="number" required />
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="f-label block mb-1.5">DD Type</label>
+                    <select value={form.drawdownType} onChange={(e) => setForm({ ...form, drawdownType: e.target.value })} className="w-full h-8 px-2 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[11px] text-t1 focus:outline-none focus:border-brand">
+                      <option value="static">Static</option>
+                      <option value="trailing">Trailing</option>
+                      <option value="eod_trailing">EOD Trail</option>
+                    </select>
+                  </div>
+                  <Inp label="Max DD %" value={form.drawdownPct} onChange={(v) => setForm({ ...form, drawdownPct: v })} placeholder="10" type="number" />
+                  <Inp label="Split %" value={form.splitPct} onChange={(v) => setForm({ ...form, splitPct: v })} placeholder="80" type="number" />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setStep("welcome")} className="h-9 w-9 rounded-[var(--r-md)] border border-line-1 flex items-center justify-center text-t4 hover:text-t1 hover:bg-layer-3 transition-colors">
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <button type="submit" disabled={create.isPending} className="flex-1 h-9 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                    {create.isPending ? "Creating..." : "Create Account"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+
+          {step === "complete" && (
+            <motion.div key="complete" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="card card-body text-center space-y-5">
+              <div className="h-12 w-12 rounded-full bg-up-soft flex items-center justify-center mx-auto">
+                <Check className="h-6 w-6 text-up" />
+              </div>
+              <div>
+                <h2 className="f-title mb-1">You&apos;re all set</h2>
+                <p className="f-sub">Your account is ready. Head to the Control Center to start tracking.</p>
+              </div>
+              <button onClick={() => router.push("/")} className="w-full h-9 rounded-[var(--r-md)] bg-brand text-white text-[12px] font-medium hover:bg-brand-dim transition-colors">
+                Go to Control Center
+              </button>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+function Feature({ icon: Icon, text }: { icon: any; text: string }) {
+  return (
+    <div className="flex items-center gap-3 text-left px-4 py-2 rounded-[var(--r-md)] bg-layer-3/50">
+      <Icon className="h-4 w-4 text-brand shrink-0" />
+      <span className="text-[12px] text-t2">{text}</span>
+    </div>
+  );
+}
+
+function Inp({ label, value, onChange, placeholder, type = "text", required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; required?: boolean }) {
+  return (
+    <div>
+      <label className="f-label block mb-1.5">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} className="w-full h-8 px-3 rounded-[var(--r-md)] border border-line-1 bg-layer-1 text-[12px] text-t1 placeholder:text-t4 focus:outline-none focus:border-brand transition-colors" />
     </div>
   );
 }

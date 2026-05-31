@@ -36,8 +36,42 @@ export default function DashboardPage() {
   if (isLoading) return <Loading />;
   if (!accounts || accounts.length === 0) return <Empty />;
 
+  const todayTrades = 0;
+  const dangerAccounts = funded.filter((a) => {
+    const init = Number(a.initialBalance ?? a.currentBalance);
+    const loss = Math.max(0, init - Number(a.currentBalance));
+    return (loss / (init * 0.1)) > 0.7;
+  }).length;
+
   return (
     <div className="space-y-5">
+      {/* ━━━ DAILY STATUS BAR ━━━ */}
+      <div className="flex items-center gap-4 px-4 py-2.5 rounded-[var(--r-lg)] bg-layer-2 border border-line-0">
+        <div className="flex items-center gap-1.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-up animate-blink" />
+          <span className="f-num-xs text-t2">Today</span>
+        </div>
+        <div className="h-3 w-px bg-line-1" />
+        <span className="f-num-xs text-t3">{todayTrades} trades</span>
+        <div className="h-3 w-px bg-line-1" />
+        <span className="f-num-xs text-t3">{funded.length} active accounts</span>
+        {dangerAccounts > 0 && (
+          <>
+            <div className="h-3 w-px bg-line-1" />
+            <span className="f-num-xs text-down">{dangerAccounts} at risk</span>
+          </>
+        )}
+        {pending > 0 && (
+          <>
+            <div className="h-3 w-px bg-line-1" />
+            <span className="f-num-xs text-warn">{formatCurrency(pending)} pending</span>
+          </>
+        )}
+        <div className="ml-auto">
+          <span className="f-micro">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span>
+        </div>
+      </div>
+
       {/* ━━━ HERO METRIC ━━━ */}
       <div className="card-hero noise p-6">
         <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">

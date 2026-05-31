@@ -16,6 +16,31 @@ export const accountsRouter = router({
     return result;
   }),
 
+  listWithFunded: protectedProcedure.query(async ({ ctx }) => {
+    const accs = await db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.userId, ctx.userId))
+      .orderBy(desc(accounts.updatedAt));
+
+    const fundedData = await db
+      .select()
+      .from(fundedAccounts)
+      .where(
+        sql`${fundedAccounts.accountId} IN (${sql.join(
+          accs.filter((a) => a.type === "funded").map((a) => sql`${a.id}`),
+          sql`, `
+        )})`
+      );
+
+    const fundedMap = new Map(fundedData.map((f) => [f.accountId, f]));
+
+    return accs.map((a) => ({
+      ...a,
+      funded: a.type === "funded" ? fundedMap.get(a.id) ?? null : null,
+    }));
+  }),
+
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {

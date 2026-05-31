@@ -3,25 +3,41 @@
 import Link from "next/link";
 import { trpc } from "@/server/trpc/client";
 import { formatCurrency } from "@/lib/formatters";
-import { Shield, AlertTriangle, CheckCircle } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, Activity } from "lucide-react";
 
 export default function RiskPage() {
-  const { data: accounts } = trpc.accounts.list.useQuery();
-  const funded = accounts?.filter((a) => a.type === "funded" && a.status === "active") ?? [];
-  const breached = accounts?.filter((a) => a.status === "breached") ?? [];
+  const { data: accountsData } = trpc.accounts.listWithFunded.useQuery();
+  const accounts = accountsData ?? [];
+  const funded = accounts.filter((a) => a.type === "funded" && a.status === "active");
+  const breached = accounts.filter((a) => a.status === "breached");
   const totalExposure = funded.reduce((s, a) => s + Number(a.currentBalance), 0);
 
   const rows = funded.map((acc) => {
     const initial = Number(acc.initialBalance ?? acc.currentBalance);
     const current = Number(acc.currentBalance);
-    const maxDdPct = 10;
-    const maxDdAbs = initial * (maxDdPct / 100);
-    const loss = Math.max(0, initial - current);
+    const maxDdPct = acc.funded?.maxDrawdownPct ? Number(acc.funded.maxDrawdownPct) : 10;
+    const ddType = acc.funded?.maxDrawdownType ?? "static";
+    const hwm = acc.funded?.currentHighWaterMark ? Number(acc.funded.currentHighWaterMark) : initial;
+
+    let maxDdAbs: number;
+    let loss: number;
+
+    if (ddType === "trailing" || ddType === "eod_trailing") {
+      maxDdAbs = hwm * (maxDdPct / 100);
+      loss = Math.max(0, hwm - current);
+    } else {
+      maxDdAbs = initial * (maxDdPct / 100);
+      loss = Math.max(0, initial - current);
+    }
+
     const usage = maxDdAbs > 0 ? (loss / maxDdAbs) * 100 : 0;
     const remaining = Math.max(0, maxDdAbs - loss);
-    const breach = initial - maxDdAbs;
-    const state: "safe" | "warn" | "danger" = usage >= 90 ? "danger" : usage >= 60 ? "warn" : "safe";
-    return { ...acc, usage, remaining, breach, maxDdAbs, loss, state };
+    const breach = ddType === "trailing" || ddType === "eod_trailing"
+      ? hwm - maxDdAbs
+      : initial - maxDdAbs;
+    const state: "safe" | "warn" | "danger" = usage >= 85 ? "danger" : usage >= 60 ? "warn" : "safe";
+
+    return { ...acc, usage, remaining, breach, maxDdAbs, maxDdPct, ddType, loss, state };
   });
 
   const avgUsage = rows.length > 0 ? rows.reduce((s, r) => s + r.usage, 0) / rows.length : 0;
@@ -40,27 +56,31 @@ export default function RiskPage() {
         <div className="flex items-center gap-2">
           {danger > 0 && <span className="pill pill-down"><AlertTriangle className="h-2.5 w-2.5" />{danger} critical</span>}
           {warn > 0 && <span className="pill pill-warn">{warn} warning</span>}
-          {danger === 0 && warn === 0 && <span className="pill pill-up"><CheckCircle className="h-2.5 w-2.5" />All clear</span>}
+          {danger === 0 && warn === 0 && funded.length > 0 && <span className="pill pill-up"><CheckCircle className="h-2.5 w-2.5" />All clear</span>}
         </div>
       </div>
 
       {/* KPIs */}
-      <div className="metric-grid grid-cols-2 lg:grid-cols-4">
-        <div className="metric-cell">
+      <div className="metric-grid grid-cols-2 lg:grid-cols-5">
+        <div className="metric-cell metric-cell-accent">
           <span className="f-label">Global Exposure</span>
           <span className="f-value text-t1">{formatCurrency(totalExposure)}</span>
           <span className="f-sub">{funded.length} accounts</span>
         </div>
         <div className="metric-cell">
           <span className="f-label">Avg DD Usage</span>
-          <span className={`f-value ${avgUsage < 50 ? "text-up" : avgUsage < 80 ? "text-warn" : "text-down"}`}>{avgUsage.toFixed(1)}%</span>
+          <span className={`f-value ${avgUsage < 50 ? "text-up" : avgUsage < 75 ? "text-warn" : "text-down"}`}>{avgUsage.toFixed(1)}%</span>
         </div>
         <div className="metric-cell">
           <span className="f-label">Total Buffer</span>
           <span className="f-value text-up">{formatCurrency(totalBuffer)}</span>
         </div>
         <div className="metric-cell">
-          <span className="f-label">Breached All-Time</span>
+          <span className="f-label">At Risk</span>
+          <span className={`f-value ${(danger + warn) > 0 ? "text-warn" : "text-t1"}`}>{danger + warn}</span>
+        </div>
+        <div className="metric-cell">
+          <span className="f-label">Breached</span>
           <span className={`f-value ${breached.length > 0 ? "text-down" : "text-up"}`}>{breached.length}</span>
         </div>
       </div>
@@ -77,6 +97,7 @@ export default function RiskPage() {
               <tr>
                 <th>Account</th>
                 <th>Balance</th>
+                <th>DD Type</th>
                 <th>DD Usage</th>
                 <th>Buffer</th>
                 <th>Breach At</th>
@@ -91,15 +112,16 @@ export default function RiskPage() {
                       <div className="h-5 w-5 rounded bg-layer-4 flex items-center justify-center text-[8px] font-bold text-t3 ring-1 ring-line-1">{(r.firm?.[0] ?? "F").toUpperCase()}</div>
                       <div>
                         <div className="text-[11px] font-medium text-t1 group-hover:text-brand transition-colors">{r.name}</div>
-                        <div className="f-micro">{r.firm ?? "Funded"}</div>
+                        <div className="f-micro">{r.firm ?? "Funded"} · {r.maxDdPct}% max</div>
                       </div>
                     </Link>
                   </td>
                   <td className="f-num-sm">{formatCurrency(Number(r.currentBalance))}</td>
+                  <td><span className="pill pill-muted">{r.ddType}</span></td>
                   <td>
                     <div className="flex items-center gap-2.5">
                       <div className="w-20 dd-track">
-                        <div className={`dd-fill ${r.state === "safe" ? "dd-fill-safe" : r.state === "warn" ? "dd-fill-warn" : "dd-fill-danger"}`} style={{ width: `${r.usage}%` }} />
+                        <div className={`dd-fill ${r.state === "safe" ? "dd-fill-safe" : r.state === "warn" ? "dd-fill-warn" : "dd-fill-danger"}`} style={{ width: `${Math.min(100, r.usage)}%` }} />
                       </div>
                       <span className={`f-num-xs font-semibold ${r.state === "safe" ? "text-up" : r.state === "warn" ? "text-warn" : "text-down"}`}>{r.usage.toFixed(1)}%</span>
                     </div>
@@ -112,9 +134,33 @@ export default function RiskPage() {
             </tbody>
           </table>
         ) : (
-          <div className="flex items-center justify-center h-[160px] f-sub">No funded accounts to monitor</div>
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <Activity className="h-5 w-5 text-t4" />
+            <p className="f-sub">Add funded accounts to monitor risk</p>
+          </div>
         )}
       </div>
+
+      {/* Breached */}
+      {breached.length > 0 && (
+        <div className="card-flush">
+          <div className="card-header"><span className="f-label text-down">Breached Accounts</span></div>
+          <div className="divide-y divide-line-0">
+            {breached.map((acc) => (
+              <div key={acc.id} className="flex items-center justify-between px-[18px] py-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="dot dot-down" />
+                  <div>
+                    <div className="text-[11px] font-medium text-t1">{acc.name}</div>
+                    <div className="f-micro">{acc.firm}</div>
+                  </div>
+                </div>
+                <span className="f-num-sm text-down">{formatCurrency(Number(acc.currentBalance))}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

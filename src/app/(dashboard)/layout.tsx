@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 px-5 py-4 pb-20 lg:px-6 lg:py-5 lg:pb-6">{children}</main>
       </div>
       <MobileNav />
+      <KeyboardShortcuts />
     </div>
   );
 }

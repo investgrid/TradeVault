@@ -4,109 +4,67 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  LayoutGrid,
-  BookOpen,
-  Activity,
-  Wallet,
-  BarChart3,
-  Shield,
-  Target,
-  Calendar,
-  Brain,
-  FileText,
-  PieChart,
-  Lightbulb,
-  Settings,
-  Plus,
-  Search,
-  ArrowRight,
-  type LucideIcon,
+  LayoutGrid, BookOpen, Activity, Wallet, BarChart3, Shield,
+  Target, Calendar, Settings, Plus, Search, ArrowRight,
+  type LucideIcon, ArrowUpDown, Receipt,
 } from "lucide-react";
 
-interface CommandItem {
+interface Command {
   id: string;
   label: string;
-  description?: string;
+  shortcut?: string;
   icon: LucideIcon;
   action: () => void;
   category: string;
 }
 
-interface CommandPaletteProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export function CommandPalette({ open, onClose }: CommandPaletteProps) {
+export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const commands: CommandItem[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutGrid, action: () => router.push("/"), category: "Navigation" },
-    { id: "journal", label: "Trade Journal", icon: BookOpen, action: () => router.push("/journal"), category: "Navigation" },
-    { id: "trades", label: "Trades", icon: Activity, action: () => router.push("/trades"), category: "Navigation" },
-    { id: "accounts", label: "Accounts", icon: Wallet, action: () => router.push("/accounts"), category: "Navigation" },
-    { id: "analytics", label: "Analytics", icon: BarChart3, action: () => router.push("/analytics"), category: "Navigation" },
-    { id: "risk", label: "Risk Control", icon: Shield, action: () => router.push("/risk"), category: "Navigation" },
-    { id: "goals", label: "Goals", icon: Target, action: () => router.push("/goals"), category: "Navigation" },
-    { id: "calendar", label: "Calendar", icon: Calendar, action: () => router.push("/calendar"), category: "Navigation" },
-    { id: "playbook", label: "Playbook", icon: FileText, action: () => router.push("/playbook"), category: "Navigation" },
-    { id: "psychology", label: "Psychology", icon: Brain, action: () => router.push("/psychology"), category: "Navigation" },
-    { id: "reports", label: "Reports", icon: PieChart, action: () => router.push("/reports"), category: "Navigation" },
-    { id: "insights", label: "Insights", icon: Lightbulb, action: () => router.push("/insights"), category: "Navigation" },
-    { id: "settings", label: "Settings", icon: Settings, action: () => router.push("/settings"), category: "Navigation" },
-    { id: "new-trade", label: "Log New Trade", description: "Record a new trade entry", icon: Plus, action: () => router.push("/journal?new=true"), category: "Actions" },
-    { id: "new-account", label: "Add Account", description: "Connect a new trading account", icon: Plus, action: () => router.push("/accounts?new=true"), category: "Actions" },
+  const commands: Command[] = [
+    { id: "home", label: "Control Center", shortcut: "G D", icon: LayoutGrid, action: () => router.push("/"), category: "Navigate" },
+    { id: "accounts", label: "Accounts", shortcut: "G A", icon: Wallet, action: () => router.push("/accounts"), category: "Navigate" },
+    { id: "payouts", label: "Payouts", shortcut: "G P", icon: ArrowUpDown, action: () => router.push("/payouts"), category: "Navigate" },
+    { id: "expenses", label: "Expenses", shortcut: "G E", icon: Receipt, action: () => router.push("/expenses"), category: "Navigate" },
+    { id: "risk", label: "Risk Control", shortcut: "G R", icon: Shield, action: () => router.push("/risk"), category: "Navigate" },
+    { id: "analytics", label: "Analytics", shortcut: "G N", icon: BarChart3, action: () => router.push("/analytics"), category: "Navigate" },
+    { id: "journal", label: "Journal", shortcut: "G J", icon: BookOpen, action: () => router.push("/journal"), category: "Navigate" },
+    { id: "trades", label: "Trades", shortcut: "G T", icon: Activity, action: () => router.push("/trades"), category: "Navigate" },
+    { id: "calendar", label: "Calendar", shortcut: "G C", icon: Calendar, action: () => router.push("/calendar"), category: "Navigate" },
+    { id: "goals", label: "Goals", shortcut: "G O", icon: Target, action: () => router.push("/goals"), category: "Navigate" },
+    { id: "settings", label: "Settings", shortcut: "G S", icon: Settings, action: () => router.push("/settings"), category: "Navigate" },
+    { id: "new-trade", label: "Log New Trade", icon: Plus, action: () => router.push("/journal"), category: "Actions" },
+    { id: "new-account", label: "Add Account", icon: Plus, action: () => router.push("/accounts?new=true"), category: "Actions" },
+    { id: "new-payout", label: "Record Payout", icon: Plus, action: () => router.push("/payouts"), category: "Actions" },
   ];
 
   const filtered = query
-    ? commands.filter(
-        (cmd) =>
-          cmd.label.toLowerCase().includes(query.toLowerCase()) ||
-          cmd.category.toLowerCase().includes(query.toLowerCase())
-      )
+    ? commands.filter((c) => c.label.toLowerCase().includes(query.toLowerCase()))
     : commands;
 
-  const grouped = filtered.reduce(
-    (acc, cmd) => {
-      if (!acc[cmd.category]) acc[cmd.category] = [];
-      acc[cmd.category].push(cmd);
-      return acc;
-    },
-    {} as Record<string, CommandItem[]>
-  );
+  const grouped = filtered.reduce((acc, cmd) => {
+    if (!acc[cmd.category]) acc[cmd.category] = [];
+    acc[cmd.category].push(cmd);
+    return acc;
+  }, {} as Record<string, Command[]>);
 
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      setSelected(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (open) { setQuery(""); setSelected(0); setTimeout(() => inputRef.current?.focus(), 50); }
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelected((s) => Math.min(s + 1, filtered.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelected((s) => Math.max(s - 1, 0));
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        if (filtered[selected]) {
-          filtered[selected].action();
-          onClose();
-        }
-      }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowDown") { e.preventDefault(); setSelected((s) => Math.min(s + 1, filtered.length - 1)); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setSelected((s) => Math.max(s - 1, 0)); }
+      else if (e.key === "Enter") { e.preventDefault(); filtered[selected]?.action(); onClose(); }
     }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, filtered, selected, onClose]);
 
   if (!open) return null;
@@ -115,83 +73,41 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="cmd-overlay"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -8 }}
-            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-            className="cmd-dialog"
-          >
-            {/* Search Input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle">
-              <Search className="h-4 w-4 text-text-muted shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setSelected(0);
-                }}
-                placeholder="Search commands, pages, actions..."
-                className="flex-1 bg-transparent text-[13px] text-text-primary placeholder:text-text-muted outline-none"
-              />
-              <kbd className="text-[9px] text-text-disabled bg-bg-elevated px-1.5 py-0.5 rounded border border-border-subtle">
-                ESC
-              </kbd>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.1 }} className="cmd-overlay" onClick={onClose} />
+          <motion.div initial={{ opacity: 0, scale: 0.97, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: -6 }} transition={{ duration: 0.12 }} className="cmd-dialog">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-line-1">
+              <Search className="h-4 w-4 text-t4 shrink-0" />
+              <input ref={inputRef} type="text" value={query} onChange={(e) => { setQuery(e.target.value); setSelected(0); }} placeholder="Type a command or search..." className="flex-1 bg-transparent text-[13px] text-t1 placeholder:text-t4 outline-none" />
+              <kbd className="text-[9px] text-t4 bg-layer-4 px-1.5 py-0.5 rounded border border-line-1">ESC</kbd>
             </div>
-
-            {/* Results */}
-            <div className="max-h-[320px] overflow-y-auto py-2">
-              {Object.entries(grouped).map(([category, items]) => (
-                <div key={category}>
-                  <div className="px-4 py-1.5">
-                    <span className="text-caption">{category}</span>
-                  </div>
+            <div className="max-h-[320px] overflow-y-auto py-1.5">
+              {Object.entries(grouped).map(([cat, items]) => (
+                <div key={cat}>
+                  <div className="px-4 py-1.5"><span className="f-label">{cat}</span></div>
                   {items.map((cmd) => {
-                    const globalIndex = filtered.indexOf(cmd);
+                    const idx = filtered.indexOf(cmd);
                     return (
                       <button
                         key={cmd.id}
-                        onClick={() => {
-                          cmd.action();
-                          onClose();
-                        }}
-                        onMouseEnter={() => setSelected(globalIndex)}
-                        className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
-                          globalIndex === selected
-                            ? "bg-bg-hover text-text-primary"
-                            : "text-text-secondary hover:bg-bg-hover"
-                        }`}
+                        onClick={() => { cmd.action(); onClose(); }}
+                        onMouseEnter={() => setSelected(idx)}
+                        className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${idx === selected ? "bg-layer-3 text-t1" : "text-t2 hover:bg-layer-3"}`}
                       >
-                        <cmd.icon className="h-3.5 w-3.5 text-text-muted shrink-0" strokeWidth={1.5} />
-                        <div className="flex flex-1 flex-col min-w-0">
-                          <span className="text-[12px] font-medium truncate">{cmd.label}</span>
-                          {cmd.description && (
-                            <span className="text-[10px] text-text-muted truncate">{cmd.description}</span>
-                          )}
-                        </div>
-                        {globalIndex === selected && (
-                          <ArrowRight className="h-3 w-3 text-text-muted shrink-0" />
-                        )}
+                        <cmd.icon className="h-3.5 w-3.5 text-t4 shrink-0" strokeWidth={1.5} />
+                        <span className="flex-1 text-[12px] font-medium">{cmd.label}</span>
+                        {cmd.shortcut && <kbd className="text-[9px] text-t4 bg-layer-4 px-1.5 py-0.5 rounded border border-line-0">{cmd.shortcut}</kbd>}
+                        {idx === selected && <ArrowRight className="h-3 w-3 text-t4" />}
                       </button>
                     );
                   })}
                 </div>
               ))}
-              {filtered.length === 0 && (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-[12px] text-text-muted">No results found</p>
-                </div>
-              )}
+              {filtered.length === 0 && <div className="px-4 py-6 text-center f-sub">No results</div>}
+            </div>
+            <div className="px-4 py-2 border-t border-line-0 flex items-center gap-4">
+              <span className="f-micro flex items-center gap-1"><kbd className="text-[8px] bg-layer-4 px-1 rounded">↑↓</kbd> navigate</span>
+              <span className="f-micro flex items-center gap-1"><kbd className="text-[8px] bg-layer-4 px-1 rounded">↵</kbd> select</span>
+              <span className="f-micro flex items-center gap-1"><kbd className="text-[8px] bg-layer-4 px-1 rounded">esc</kbd> close</span>
             </div>
           </motion.div>
         </>
