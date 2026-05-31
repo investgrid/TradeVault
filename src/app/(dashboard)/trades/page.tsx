@@ -22,7 +22,7 @@ export default function TradesPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <button className="flex items-center gap-1 h-[26px] px-2 rounded-[var(--r-sm)] border border-line-1 text-[10px] text-t3 hover:border-line-2 transition-colors"><Filter className="h-3 w-3" /> Filter</button>
-          <button className="flex items-center gap-1 h-[26px] px-2 rounded-[var(--r-sm)] border border-line-1 text-[10px] text-t3 hover:border-line-2 transition-colors"><Download className="h-3 w-3" /> Export</button>
+          <button onClick={() => window.open("/api/export/trades", "_blank")} className="flex items-center gap-1 h-[26px] px-2 rounded-[var(--r-sm)] border border-line-1 text-[10px] text-t3 hover:border-line-2 transition-colors"><Download className="h-3 w-3" /> Export</button>
         </div>
       </div>
 

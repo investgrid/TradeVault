@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Search, Plus, Bell } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { CommandPalette } from "@/components/command-palette";
+import { NotificationPanel } from "@/components/notifications";
 
 const TITLES: Record<string, string> = {
   "/": "Control Center", "/accounts": "Accounts", "/payouts": "Payouts",
@@ -34,9 +35,7 @@ export function TopBar() {
             <Search className="h-3 w-3" /><span className="hidden sm:inline">Search</span>
             <kbd className="hidden sm:inline ml-1 text-[8px] text-t4/60 bg-layer-2 px-1 rounded">⌘K</kbd>
           </button>
-          <button className="relative h-[26px] w-[26px] flex items-center justify-center rounded-[var(--r-sm)] text-t4 hover:text-t2 hover:bg-layer-3 transition-colors">
-            <Bell className="h-3.5 w-3.5" />
-          </button>
+          <NotificationPanel />
           <button className="flex items-center gap-1 h-[26px] px-2.5 rounded-[var(--r-sm)] bg-brand text-white text-[10px] font-medium hover:bg-brand-dim transition-colors">
             <Plus className="h-3 w-3" /><span className="hidden sm:inline">Add</span>
           </button>

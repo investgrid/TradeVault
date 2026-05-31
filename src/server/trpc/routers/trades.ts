@@ -170,6 +170,14 @@ export const tradesRouter = router({
       return { total, wins, losses: total - wins, totalPnl, avgRR, winRate };
     }),
 
+  todayStats: protectedProcedure.query(async ({ ctx }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = await db.select().from(trades).where(and(eq(trades.userId, ctx.userId), eq(trades.tradeDate, today)));
+    const count = rows.length;
+    const pnl = rows.reduce((s, r) => s + Number(r.pnl ?? 0), 0);
+    return { count, pnl };
+  }),
+
   pnlByDate: protectedProcedure
     .input(z.object({ days: z.number().optional().default(30) }).optional())
     .query(async ({ ctx, input }) => {

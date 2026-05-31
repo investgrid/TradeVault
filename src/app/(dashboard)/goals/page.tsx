@@ -1,20 +1,15 @@
 "use client";
 
-import { Target, CheckCircle, Circle, Flame, Trophy } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Target, CheckCircle, Circle, Flame, Trophy, Brain } from "lucide-react";
+import { trpc } from "@/server/trpc/client";
 
-const DAILY = [
-  { id: "1", label: "Follow trading plan", done: true },
-  { id: "2", label: "Max 3 trades", done: true },
-  { id: "3", label: "No revenge trading", done: true },
-  { id: "4", label: "Journal all trades", done: false },
-  { id: "5", label: "Pre-session review", done: true },
-];
-
-const WEEKLY = [
-  { label: "Profit target $1,000", current: 735, target: 1000 },
-  { label: "Win rate > 60%", current: 67, target: 60 },
-  { label: "Avg RR > 2.0", current: 2.4, target: 2.0 },
-  { label: "Max DD < 2%", current: 1.1, target: 2.0 },
+const DEFAULT_ITEMS = [
+  "Follow trading plan",
+  "Max 3 trades",
+  "No revenge trading",
+  "Journal all trades",
+  "Pre-session review",
 ];
 
 const STREAKS = [
@@ -24,74 +19,199 @@ const STREAKS = [
 ];
 
 export default function GoalsPage() {
-  const done = DAILY.filter((g) => g.done).length;
+  const { data: todayEntry, isLoading } = trpc.checklist.getToday.useQuery();
+  const upsert = trpc.checklist.upsert.useMutation();
+  const utils = trpc.useUtils();
+
+  const [items, setItems] = useState<string[]>(DEFAULT_ITEMS);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [mindsetScore, setMindsetScore] = useState<number>(5);
+  const [notes, setNotes] = useState("");
+  const [initialized, setInitialized] = useState(false);
+
+  // Load from server once
+  useEffect(() => {
+    if (todayEntry && !initialized) {
+      try {
+        const parsed = JSON.parse(todayEntry.items);
+        if (Array.isArray(parsed) && parsed.length > 0) setItems(parsed);
+      } catch {}
+      try {
+        const parsed = JSON.parse(todayEntry.completedItems ?? "[]");
+        if (Array.isArray(parsed)) setCompleted(parsed);
+      } catch {}
+      setMindsetScore(todayEntry.mindsetScore ?? 5);
+      setNotes(todayEntry.notes ?? "");
+      setInitialized(true);
+    } else if (!todayEntry && !isLoading && !initialized) {
+      setInitialized(true);
+    }
+  }, [todayEntry, isLoading, initialized]);
+
+  const save = useCallback(
+    (newCompleted: string[], newMindset: number, newNotes: string) => {
+      upsert.mutate(
+        {
+          items: JSON.stringify(items),
+          completedItems: JSON.stringify(newCompleted),
+          mindsetScore: newMindset,
+          notes: newNotes,
+        },
+        { onSuccess: () => utils.checklist.getToday.invalidate() }
+      );
+    },
+    [items, upsert, utils]
+  );
+
+  const toggleItem = (item: string) => {
+    const next = completed.includes(item)
+      ? completed.filter((i) => i !== item)
+      : [...completed, item];
+    setCompleted(next);
+    save(next, mindsetScore, notes);
+  };
+
+  const handleMindset = (val: number) => {
+    setMindsetScore(val);
+    save(completed, val, notes);
+  };
+
+  const handleNotes = (val: string) => {
+    setNotes(val);
+  };
+
+  const saveNotes = () => {
+    save(completed, mindsetScore, notes);
+  };
+
+  const done = completed.length;
+  const total = items.length;
+  const pct = total > 0 ? (done / total) * 100 : 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="skeleton h-8 w-48 rounded-[var(--r-md)]" />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="skeleton h-[280px] rounded-[var(--r-md)]" />
+          <div className="skeleton h-[280px] rounded-[var(--r-md)]" />
+          <div className="skeleton h-[280px] rounded-[var(--r-md)]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="t-heading text-text-primary">Goals & Discipline</h2>
-        <span className="pill pill-profit"><Flame className="h-2.5 w-2.5" /> 5 day streak</span>
+        <h2 className="f-title text-t1">Goals & Discipline</h2>
+        <span className="pill pill-brand"><Flame className="h-2.5 w-2.5" /> {STREAKS[1].current} day streak</span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Daily */}
-        <div className="panel">
-          <div className="panel-header">
-            <span className="t-label">Today</span>
-            <span className="t-mono text-text-secondary text-[10px]">{done}/{DAILY.length}</span>
+        {/* Daily Checklist */}
+        <div className="card">
+          <div className="card-header">
+            <span className="f-label">Today&apos;s Checklist</span>
+            <span className="f-num-sm text-t3">{done}/{total}</span>
           </div>
-          <div className="panel-body-compact flex flex-col gap-1.5">
-            {DAILY.map((g) => (
-              <div key={g.id} className="flex items-center gap-2 px-1 py-0.5">
-                {g.done ? <CheckCircle className="h-3.5 w-3.5 text-profit shrink-0" /> : <Circle className="h-3.5 w-3.5 text-text-muted shrink-0" />}
-                <span className={`text-[11px] ${g.done ? "text-text-secondary line-through" : "text-text-primary"}`}>{g.label}</span>
+          <div className="p-4 flex flex-col gap-2">
+            {items.map((item) => {
+              const isDone = completed.includes(item);
+              return (
+                <button
+                  key={item}
+                  onClick={() => toggleItem(item)}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--r-sm)] hover:bg-layer-3 transition-colors text-left w-full"
+                >
+                  {isDone ? (
+                    <CheckCircle className="h-3.5 w-3.5 text-up shrink-0" />
+                  ) : (
+                    <Circle className="h-3.5 w-3.5 text-t4 shrink-0" />
+                  )}
+                  <span className={`text-[11px] ${isDone ? "text-t3 line-through" : "text-t1"}`}>{item}</span>
+                </button>
+              );
+            })}
+            <div className="mt-3 dd-track">
+              <div className={`dd-fill ${pct >= 80 ? "dd-fill-safe" : pct >= 50 ? "dd-fill-warn" : "dd-fill-danger"}`} style={{ width: `${pct}%` }} />
+            </div>
+            <span className="f-micro text-center mt-1">
+              {pct === 100 ? "All done — great discipline!" : `${total - done} remaining`}
+            </span>
+          </div>
+        </div>
+
+        {/* Mindset & Notes */}
+        <div className="card">
+          <div className="card-header">
+            <div className="flex items-center gap-1.5">
+              <Brain className="h-3 w-3 text-t4" />
+              <span className="f-label">Mindset</span>
+            </div>
+            <span className="f-num-sm text-brand">{mindsetScore}/10</span>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            <div>
+              <label className="f-micro block mb-2">How do you feel about trading today?</label>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                value={mindsetScore}
+                onChange={(e) => handleMindset(Number(e.target.value))}
+                className="w-full accent-[var(--brand)]"
+              />
+              <div className="flex items-center justify-between mt-1">
+                <span className="f-micro text-down">Tilted</span>
+                <span className="f-micro text-up">Locked in</span>
               </div>
-            ))}
-            <div className="mt-2 dd-bar">
-              <div className="dd-bar-fill dd-safe" style={{ width: `${(done / DAILY.length) * 100}%` }} />
+            </div>
+            <div>
+              <label className="f-micro block mb-1.5">Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => handleNotes(e.target.value)}
+                onBlur={saveNotes}
+                placeholder="Pre-session thoughts, plan for the day..."
+                className="w-full h-[90px] rounded-[var(--r-sm)] bg-layer-3 border border-line-1 px-3 py-2 text-[11px] text-t1 placeholder:text-t4 resize-none focus:outline-none focus:ring-1 focus:ring-brand/40"
+              />
             </div>
           </div>
         </div>
 
-        {/* Weekly targets */}
-        <div className="panel">
-          <div className="panel-header"><span className="t-label">Weekly Targets</span></div>
-          <div className="panel-body-compact flex flex-col gap-3">
-            {WEEKLY.map((t) => {
-              const met = t.label.includes("<") ? t.current <= t.target : t.current >= t.target;
-              const pct = t.label.includes("<") ? 100 : Math.min(100, (t.current / t.target) * 100);
+        {/* Streaks */}
+        <div className="card">
+          <div className="card-header">
+            <div className="flex items-center gap-1.5">
+              <Trophy className="h-3 w-3 text-t4" />
+              <span className="f-label">Streaks</span>
+            </div>
+          </div>
+          <div className="p-4 flex flex-col gap-3">
+            {STREAKS.map((s) => {
+              const streakPct = s.best > 0 ? Math.min(100, (s.current / s.best) * 100) : 0;
               return (
-                <div key={t.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] text-text-primary">{t.label}</span>
-                    <span className={`t-mono text-[10px] ${met ? "text-profit" : "text-text-secondary"}`}>{t.current}</span>
+                <div key={s.label} className="rounded-[var(--r-sm)] p-3 bg-layer-2 border border-line-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-[var(--r-sm)] bg-brand-soft flex items-center justify-center shrink-0">
+                      <Target className="h-3.5 w-3.5 text-brand" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-[11px] font-medium text-t1">{s.label}</div>
+                      <div className="f-micro">Best: {s.best} days</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="f-num text-brand">{s.current}</div>
+                      <div className="f-micro">days</div>
+                    </div>
                   </div>
-                  <div className="dd-bar"><div className={`dd-bar-fill ${met ? "dd-safe" : "bg-accent"}`} style={{ width: `${pct}%` }} /></div>
+                  <div className="dd-track mt-2">
+                    <div className="dd-fill dd-fill-safe" style={{ width: `${streakPct}%` }} />
+                  </div>
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Streaks */}
-        <div className="panel">
-          <div className="panel-header"><span className="t-label">Streaks</span></div>
-          <div className="panel-body-compact flex flex-col gap-3">
-            {STREAKS.map((s) => (
-              <div key={s.label} className="flex items-center gap-3 rounded-[var(--radius-sm)] p-2 bg-bg-panel border border-border-subtle">
-                <div className="h-7 w-7 rounded bg-accent-soft flex items-center justify-center shrink-0">
-                  <Target className="h-3.5 w-3.5 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-[11px] font-medium text-text-primary">{s.label}</div>
-                  <div className="text-[9px] text-text-muted">Best: {s.best}</div>
-                </div>
-                <div className="text-right">
-                  <div className="t-metric-sm text-accent">{s.current}</div>
-                  <div className="text-[8px] text-text-muted">days</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>

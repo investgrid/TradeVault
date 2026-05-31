@@ -9,6 +9,7 @@ import { insightsRouter } from "./routers/insights";
 import { billingRouter } from "./routers/billing";
 import { tradesRouter } from "./routers/trades";
 import { playbookRouter } from "./routers/playbook";
+import { checklistRouter } from "./routers/checklist";
 
 export const appRouter = router({
   user: userRouter,
@@ -21,6 +22,7 @@ export const appRouter = router({
   billing: billingRouter,
   trades: tradesRouter,
   playbook: playbookRouter,
+  checklist: checklistRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const periodDays = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 }[period] ?? 90;
   const { data: equity } = trpc.analytics.netWorthHistory.useQuery({ days: periodDays });
   const { data: insights } = trpc.insights.generate.useQuery();
+  const { data: todayData } = trpc.trades.todayStats.useQuery();
 
   const funded = accounts?.filter((a) => a.type === "funded" && a.status === "active") ?? [];
   const breached = accounts?.filter((a) => a.status === "breached") ?? [];
@@ -36,7 +37,7 @@ export default function DashboardPage() {
   if (isLoading) return <Loading />;
   if (!accounts || accounts.length === 0) return <Empty />;
 
-  const todayTrades = 0;
+  const todayTrades = todayData?.count ?? 0;
   const dangerAccounts = funded.filter((a) => {
     const init = Number(a.initialBalance ?? a.currentBalance);
     const loss = Math.max(0, init - Number(a.currentBalance));
@@ -53,6 +54,14 @@ export default function DashboardPage() {
         </div>
         <div className="h-3 w-px bg-line-1" />
         <span className="f-num-xs text-t3">{todayTrades} trades</span>
+        {(todayData?.pnl ?? 0) !== 0 && (
+          <>
+            <div className="h-3 w-px bg-line-1" />
+            <span className={`f-num-xs font-semibold ${(todayData?.pnl ?? 0) >= 0 ? "text-up" : "text-down"}`}>
+              {(todayData?.pnl ?? 0) >= 0 ? "+" : ""}${Math.abs(todayData?.pnl ?? 0).toFixed(0)} today
+            </span>
+          </>
+        )}
         <div className="h-3 w-px bg-line-1" />
         <span className="f-num-xs text-t3">{funded.length} active accounts</span>
         {dangerAccounts > 0 && (
